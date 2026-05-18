@@ -1,0 +1,16 @@
+{
+  "name": "naturize",
+  "version": "1.0.0",
+  "description": "AI Text Humanizer and Detector powered by Google Gemini",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "devDependencies": {
+    "vercel": "^37.0.0"
+  }
+}

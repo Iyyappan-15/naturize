@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact — Naturize</title>
+  <meta name="description" content="Contact the Naturize team. We're happy to help with questions, feedback, or bug reports." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="apple-touch-icon" href="logo.png" />
+  <style>
+    .contact-page { max-width: 680px; margin: 0 auto; padding: 80px 24px 100px; }
+    .contact-page h1 { font-size: clamp(2rem,4vw,2.8rem); margin-bottom: 8px; }
+    .contact-sub { color: var(--muted); margin-bottom: 48px; font-size: 1rem; }
+    .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: .88rem; color: var(--muted); margin-bottom: 40px; transition: color .2s; }
+    .back-link:hover { color: var(--text); }
+    .contact-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 48px; }
+    .contact-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; transition: var(--transition); }
+    .contact-card:hover { border-color: rgba(0,229,192,0.25); transform: translateY(-3px); }
+    .contact-card-icon { font-size: 1.6rem; margin-bottom: 12px; }
+    .contact-card h3 { font-size: 1rem; margin-bottom: 6px; font-family: var(--font-head); color: var(--text); }
+    .contact-card p { font-size: .88rem; color: var(--muted); margin-bottom: 14px; line-height: 1.6; }
+    .contact-card a.contact-link { display: inline-flex; align-items: center; gap: 6px; font-size: .88rem; font-weight: 600; color: var(--accent); transition: opacity .2s; }
+    .contact-card a.contact-link:hover { opacity: .75; }
+    .form-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; }
+    .form-section h2 { font-size: 1.3rem; margin-bottom: 6px; font-family: var(--font-head); }
+    .form-section > p { font-size: .9rem; color: var(--muted); margin-bottom: 28px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+    .form-label { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .form-input, .form-textarea, .form-select {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 12px 14px; font-size: .95rem; color: var(--text); font-family: var(--font-body);
+      transition: border-color .2s, box-shadow .2s; outline: none; width: 100%;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: rgba(0,229,192,0.4); box-shadow: 0 0 0 3px rgba(0,229,192,0.08);
+    }
+    .form-input::placeholder, .form-textarea::placeholder { color: rgba(156,163,175,0.5); }
+    .form-textarea { resize: vertical; min-height: 130px; }
+    .form-select option { background: #1a1a1e; }
+    html.light .form-select option { background: #ffffff; color: #111114; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .submit-btn { width: 100%; justify-content: center; margin-top: 8px; }
+    .faq-section { margin-top: 48px; }
+    .faq-section h2 { font-size: 1.3rem; margin-bottom: 24px; font-family: var(--font-head); }
+    .faq-item { border-bottom: 1px solid var(--border); padding: 18px 0; }
+    .faq-q { font-weight: 600; font-size: .95rem; color: var(--text); margin-bottom: 8px; }
+    .faq-a { font-size: .9rem; color: var(--muted); line-height: 1.7; }
+    .faq-a a { color: var(--accent); }
+    .success-msg { display: none; background: rgba(0,229,192,0.1); border: 1px solid rgba(0,229,192,0.25); border-radius: var(--radius-sm); padding: 16px; text-align: center; color: var(--accent); font-weight: 600; margin-top: 16px; }
+    @media(max-width:600px){ .contact-cards{grid-template-columns:1fr} .form-row{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="nav-logo"><img src="logo.png" alt="Naturize logo" width="30" height="30" style="border-radius:6px;object-fit:cover" /><span>Natur<span>ize</span></span></a>
+      <div class="nav-links"><a href="index.html#tool">Humanizer</a><a href="index.html#features">Features</a><a href="index.html#upgrade">Pricing</a></div>
+      <div class="nav-right">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <div class="contact-page">
+      <a href="index.html" class="back-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>Back to Naturize</a>
+
+      <h1>Get in Touch</h1>
+      <p class="contact-sub">We're a small team and we actually read every message. Expect a reply within 1–2 business days.</p>
+
+      <!-- Contact Options -->
+      <div class="contact-cards">
+        <div class="contact-card">
+          <div class="contact-card-icon">✉️</div>
+          <h3>Email Us</h3>
+          <p>For general questions, feedback, or anything else.</p>
+          <a href="mailto:studyprojects2005@gmail.com" class="contact-link">
+            studyprojects2005@gmail.com
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+        </div>
+        <div class="contact-card">
+          <div class="contact-card-icon">🐛</div>
+          <h3>Report a Bug</h3>
+          <p>Something broken or not working as expected?</p>
+          <a href="mailto:studyprojects2005@gmail.com" class="contact-link">
+            studyprojects2005@gmail.com
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+        </div>
+        <div class="contact-card">
+          <div class="contact-card-icon">💳</div>
+          <h3>Billing Help</h3>
+          <p>Questions about your Premium subscription or charges.</p>
+          <a href="mailto:studyprojects2005@gmail.com" class="contact-link">
+            studyprojects2005@gmail.com
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+        </div>
+        <div class="contact-card">
+          <div class="contact-card-icon">🤝</div>
+          <h3>Partnerships</h3>
+          <p>Interested in collaborating or integrating Naturize?</p>
+          <a href="mailto:studyprojects2005@gmail.com" class="contact-link">
+            studyprojects2005@gmail.com
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Contact Form -->
+      <div class="form-section">
+        <h2>Send a Message</h2>
+        <p>Fill in the form and we'll get back to you as soon as possible.</p>
+
+        <form id="contact-form" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="cf-name">Your Name</label>
+              <input class="form-input" id="cf-name" type="text" placeholder="Arjun Sharma" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="cf-email">Email Address</label>
+              <input class="form-input" id="cf-email" type="email" placeholder="you@example.com" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cf-topic">Topic</label>
+            <select class="form-select" id="cf-topic">
+              <option value="general">General Question</option>
+              <option value="bug">Bug Report</option>
+              <option value="billing">Billing / Subscription</option>
+              <option value="feature">Feature Request</option>
+              <option value="partnership">Partnership / Business</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cf-message">Message</label>
+            <textarea class="form-textarea" id="cf-message" placeholder="Describe your question or issue in as much detail as possible…" required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn--primary submit-btn" id="cf-submit">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Send Message
+          </button>
+
+          <div class="success-msg" id="cf-success">
+            ✅ Message sent! We'll get back to you within 1–2 business days.
+          </div>
+        </form>
+      </div>
+
+      <!-- FAQ -->
+      <div class="faq-section">
+        <h2>Common Questions</h2>
+
+        <div class="faq-item">
+          <div class="faq-q">Why is the humanizer not working?</div>
+          <div class="faq-a">Make sure the app is deployed on Vercel with the <code>GEMINI_API_KEY</code> environment variable set. Opening <code>index.html</code> directly as a file will not work — the API endpoints require a server.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">Can I use Naturize for free forever?</div>
+          <div class="faq-a">Yes! The free tier gives you 3 humanizations and 3 detections every day, and it resets automatically at midnight. No credit card needed.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">Does Naturize store my text?</div>
+          <div class="faq-a">No. Your text is sent to Google Gemini for processing and immediately discarded. We don't log or store any of the content you paste. Read our <a href="privacy.html">Privacy Policy</a> for full details.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">Will humanized text always pass AI detectors?</div>
+          <div class="faq-a">Naturize significantly reduces AI-like patterns in text, but no tool can guarantee 100% results across all detectors. Detection technology is constantly evolving. Always review the output yourself.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">How do I cancel my Premium subscription?</div>
+          <div class="faq-a">Email <a href="mailto:studyprojects2005@gmail.com">studyprojects2005@gmail.com</a> and we'll cancel it immediately. No questions asked.</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div style="display:flex;align-items:center;gap:8px;"><img src="logo.png" alt="Naturize" width="26" height="26" style="border-radius:5px;object-fit:cover" /><span style="font-family:var(--font-head);font-weight:700;font-size:.95rem">Naturize</span></div>
+    <nav class="footer-links"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a></nav>
+    <p class="footer-powered">Powered by <span>Google Gemini</span> · © 2025 Naturize</p>
+  </footer>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script>
+    // Theme
+    const t = document.getElementById('theme-toggle');
+    function applyTheme(v) { document.documentElement.classList.toggle('light', v === 'light'); localStorage.setItem('nz_theme', v); }
+    applyTheme(localStorage.getItem('nz_theme') || 'dark');
+    t?.addEventListener('click', () => applyTheme(document.documentElement.classList.contains('light') ? 'dark' : 'light'));
+
+    // Contact form (frontend-only simulation — wire to a backend like Formspree in production)
+    document.getElementById('contact-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name    = document.getElementById('cf-name').value.trim();
+      const email   = document.getElementById('cf-email').value.trim();
+      const message = document.getElementById('cf-message').value.trim();
+      if (!name || !email || !message) {
+        alert('Please fill in your name, email, and message.');
+        return;
+      }
+      const btn = document.getElementById('cf-submit');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      // Simulate send (replace with Formspree fetch in production)
+      setTimeout(() => {
+        document.getElementById('cf-success').style.display = 'block';
+        btn.style.display = 'none';
+      }, 1200);
+    });
+  </script>
+</body>
+</html>
