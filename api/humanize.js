@@ -39,7 +39,7 @@ ${sanitizedText}`;
 
   try {
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -53,7 +53,7 @@ ${sanitizedText}`;
     if (!geminiRes.ok) {
       const errBody = await geminiRes.text();
       console.error("Gemini API error:", errBody);
-      return res.status(502).json({ error: "AI service returned an error. Please try again." });
+      return res.status(502).json({ error: `Gemini error: ${errBody.slice(0, 200)}` });
     }
 
     const data = await geminiRes.json();
