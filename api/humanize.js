@@ -24,11 +24,11 @@ export default async function handler(req, res) {
 
   const sanitizedText = text.trim().replace(/[<>]/g, "");
 
-  const prompt = `Rewrite the following AI-generated text to sound natural, conversational, and authentically human. Vary sentence length. Use contractions where appropriate. Add subtle imperfections real humans use. Remove robotic phrasing and overly formal structure. Keep the original meaning fully intact.
+  const prompt = `Rewrite the following text to sound natural, engaging, and authentically human while maintaining a highly professional tone. Vary sentence length and structure to flow better. Remove robotic phrasing, repetitive transitions, and overly formal "AI-speak". Keep the original meaning and core information fully intact. Do NOT use casual slang, emojis, or unprofessional imperfections.
 
 Then rate how human the rewrite sounds on a scale of 0–100 (100 = perfectly human, 0 = clearly AI).
 
-Return ONLY valid JSON in this exact format with no markdown fences:
+Return ONLY a valid JSON object in this exact format:
 {
   "humanized": "the complete rewritten text here",
   "humanityScore": 85
@@ -47,7 +47,20 @@ ${sanitizedText}`;
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.85, topP: 0.95, maxOutputTokens: 2048, responseMimeType: "application/json" },
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.9,
+          maxOutputTokens: 2048,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "object",
+            properties: {
+              humanized: { type: "string" },
+              humanityScore: { type: "integer" }
+            },
+            required: ["humanized", "humanityScore"]
+          }
+        },
       }),
     };
 

@@ -39,22 +39,15 @@ export default async function handler(req, res) {
 
   const prompt = `Analyze the following text and determine how likely it is to have been written by AI.
 
-Return ONLY valid JSON in this exact format, with no markdown code fences, no extra text:
-{
-  "score": <integer from 0 to 100>,
-  "verdict": "<one of: Human | Likely Human | Mixed | Likely AI | AI-Generated>",
-  "reasons": [
-    "<specific reason 1>",
-    "<specific reason 2>",
-    "<specific reason 3>"
-  ]
-}
+Return ONLY a valid JSON object.
 
 Score meaning:
 0 = fully human written
 100 = definitely AI-generated
 
-Text:
+Valid verdicts: "Human", "Likely Human", "Mixed", "Likely AI", "AI-Generated".
+
+Text to analyze:
 ${sanitizedText}`;
 
   try {
@@ -72,6 +65,15 @@ ${sanitizedText}`;
           topP: 0.9,
           maxOutputTokens: 512,
           responseMimeType: "application/json",
+          responseSchema: {
+            type: "object",
+            properties: {
+              score: { type: "integer" },
+              verdict: { type: "string" },
+              reasons: { type: "array", items: { type: "string" } }
+            },
+            required: ["score", "verdict", "reasons"]
+          }
         },
       }),
     };
