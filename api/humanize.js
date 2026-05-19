@@ -16,9 +16,9 @@ export default async function handler(req, res) {
   if (text.trim().length > 10000)
     return res.status(400).json({ error: "Input too long. Maximum 10,000 characters allowed." });
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    console.error("GEMINI_API_KEY environment variable not set.");
+    console.error("GROQ_API_KEY environment variable not set.");
     return res.status(500).json({ error: "Server configuration error." });
   }
 
@@ -38,46 +38,38 @@ Text to rewrite:
 ${sanitizedText}`;
 
   try {
-    let geminiRes;
+    let apiRes;
     let success = false;
     let errBody = "";
 
     const fetchOptions = {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          topP: 0.9,
-          maxOutputTokens: 2048,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "object",
-            properties: {
-              humanized: { type: "string" },
-              humanityScore: { type: "integer" }
-            },
-            required: ["humanized", "humanityScore"]
-          }
-        },
+        model: "llama3-70b-8192",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        max_tokens: 2048,
+        response_format: { type: "json_object" }
       }),
     };
 
     for (let attempt = 1; attempt <= 3; attempt++) {
-      geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
+      apiRes = await fetch(
+        `https://api.groq.com/openai/v1/chat/completions`,
         fetchOptions
       );
 
-      if (geminiRes.ok) {
+      if (apiRes.ok) {
         success = true;
         break;
       }
 
-      errBody = await geminiRes.text();
-      // Retry on 503 (Service Unavailable), 429 (Too Many Requests), or 500 (Internal Error)
-      if (geminiRes.status === 503 || geminiRes.status === 429 || geminiRes.status === 500) {
+      errBody = await apiRes.text();
+      if (apiRes.status === 503 || apiRes.status === 429 || apiRes.status === 500) {
         if (attempt < 3) {
           await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
           continue;
@@ -87,15 +79,15 @@ ${sanitizedText}`;
     }
 
     if (!success) {
-      console.error("Gemini API error:", errBody);
-      if (geminiRes && geminiRes.status === 503) {
-        return res.status(503).json({ error: "The AI model is currently experiencing high demand. Please try again in a moment." });
+      console.error("Groq API error:", errBody);
+      if (apiRes && apiRes.status === 429) {
+        return res.status(429).json({ error: "API quota exceeded. Please try again later." });
       }
-      return res.status(502).json({ error: `Gemini error: ${errBody.slice(0, 200)}` });
+      return res.status(502).json({ error: `API error: ${errBody.slice(0, 200)}` });
     }
 
-    const data = await geminiRes.json();
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const data = await apiRes.json();
+    const rawText = data?.choices?.[0]?.message?.content || "";
 
     if (!rawText) return res.status(502).json({ error: "AI returned an empty response. Please try again." });
 
