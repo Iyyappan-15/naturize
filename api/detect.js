@@ -58,24 +58,50 @@ Text:
 ${sanitizedText}`;
 
   try {
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            topP: 0.9,
-            maxOutputTokens: 512,
-          },
-        }),
-      }
-    );
+    let geminiRes;
+    let success = false;
+    let errBody = "";
 
-    if (!geminiRes.ok) {
-      const errBody = await geminiRes.text();
+    const fetchOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.2,
+          topP: 0.9,
+          maxOutputTokens: 512,
+        },
+      }),
+    };
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`,
+        fetchOptions
+      );
+
+      if (geminiRes.ok) {
+        success = true;
+        break;
+      }
+
+      errBody = await geminiRes.text();
+      // Retry on 503 (Service Unavailable), 429 (Too Many Requests), or 500 (Internal Error)
+      if (geminiRes.status === 503 || geminiRes.status === 429 || geminiRes.status === 500) {
+        if (attempt < 3) {
+          await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+          continue;
+        }
+      }
+      break;
+    }
+
+    if (!success) {
       console.error("Gemini API error:", errBody);
+      if (geminiRes && geminiRes.status === 503) {
+        return res.status(503).json({ error: "The AI model is currently experiencing high demand. Please try again in a moment." });
+      }
       return res.status(502).json({ error: `Gemini error: ${errBody.slice(0, 200)}` });
     }
 
