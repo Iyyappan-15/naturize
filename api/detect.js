@@ -71,6 +71,7 @@ ${sanitizedText}`;
           temperature: 0.2,
           topP: 0.9,
           maxOutputTokens: 512,
+          responseMimeType: "application/json",
         },
       }),
     };
@@ -133,6 +134,7 @@ ${sanitizedText}`;
           });
         }
       } else {
+        console.error("Failed to parse Gemini response:", rawText);
         return res
           .status(502)
           .json({ error: "AI returned an unexpected format. Please retry." });

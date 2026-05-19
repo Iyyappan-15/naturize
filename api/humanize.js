@@ -47,7 +47,7 @@ ${sanitizedText}`;
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.85, topP: 0.95, maxOutputTokens: 2048 },
+        generationConfig: { temperature: 0.85, topP: 0.95, maxOutputTokens: 2048, responseMimeType: "application/json" },
       }),
     };
 
