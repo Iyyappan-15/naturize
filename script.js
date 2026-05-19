@@ -123,11 +123,11 @@ function getHumanityColor(score) {
   return '#ff5c7a';
 }
 function getHumanityVerdict(score) {
-  if (score >= 85) return '✦ Highly Human';
-  if (score >= 70) return '✦ Mostly Human';
-  if (score >= 50) return '◑ Mixed';
-  if (score >= 30) return '⚠ Partially AI';
-  return '✕ Likely AI';
+  if (score >= 85) return 'Highly Human';
+  if (score >= 70) return 'Mostly Human';
+  if (score >= 50) return 'Mixed';
+  if (score >= 30) return 'Partially AI';
+  return 'Likely AI';
 }
 
 function renderHumanityMeter(score) {
@@ -468,7 +468,7 @@ $$('[data-scroll]').forEach(btn => {
 themeToggleBtn?.addEventListener('click', () => {
   const isLight = document.documentElement.classList.contains('light');
   applyTheme(isLight ? 'dark' : 'light');
-  showToast(isLight ? '🌙 Dark mode on' : '☀️ Light mode on', 'success');
+  showToast(isLight ? 'Dark mode on' : 'Light mode on', 'success');
 });
 
 // Init
