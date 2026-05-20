@@ -38,23 +38,44 @@ Text to rewrite:
 ${sanitizedText}`;
 
   try {
-    const apiRes = await fetch(
-      `https://api.groq.com/openai/v1/chat/completions`,
-      {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${groqKey.trim()}`
-        },
-        body: JSON.stringify({
-          model: "llama-4-scout-17b",
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.7,
-          max_tokens: 2048,
-          response_format: { type: "json_object" }
-        }),
+    const makeRequest = async (modelName) => {
+      return await fetch(
+        `https://api.groq.com/openai/v1/chat/completions`,
+        {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${groqKey.trim()}`
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.7,
+            max_tokens: 2048,
+            response_format: { type: "json_object" }
+          }),
+        }
+      );
+    };
+
+    let preferredModel = "llama-4-scout-17b";
+    let fallbackModel = "llama-3.3-70b-versatile";
+    
+    let apiRes = await makeRequest(preferredModel);
+
+    // Pro-developer fallback: If the requested model doesn't exist, use the stable fallback model
+    if (!apiRes.ok) {
+      let errBody = await apiRes.clone().text();
+      try {
+        const errJson = JSON.parse(errBody);
+        if (errJson.error && errJson.error.code === "model_not_found") {
+          console.warn(`Model ${preferredModel} not found. Falling back to ${fallbackModel}...`);
+          apiRes = await makeRequest(fallbackModel);
+        }
+      } catch (e) {
+        // If it's not JSON, ignore and let the normal error handling proceed
       }
-    );
+    }
 
     if (!apiRes.ok) {
       const errBody = await apiRes.text();
