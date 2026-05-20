@@ -1,6 +1,5 @@
 // /api/detect.js
 // Vercel Serverless Function — Naturize AI Detector
-// Securely proxies requests to the Google Gemini API
 
 export default async function handler(req, res) {
   // CORS headers
@@ -28,11 +27,12 @@ export default async function handler(req, res) {
       .json({ error: "Input too long. Maximum 10,000 characters allowed." });
   }
 
-  const apiKey = process.env.GROQ_API_KEY || process.env.OPENROUTER_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const openRouterKey = process.env.OPENROUTER_API_KEY || process.env.GROQ_API_KEY;
 
-  if (!apiKey) {
-    console.error("GROQ_API_KEY environment variable not set.");
-    return res.status(500).json({ error: "Server configuration error." });
+  if (!geminiKey && (!openRouterKey || openRouterKey === "undefined" || openRouterKey.trim() === "")) {
+    console.error("No valid API key environment variables set.");
+    return res.status(500).json({ error: "Server configuration error: No API key provided in Vercel settings." });
   }
 
   const sanitizedText = text.trim().replace(/[<>]/g, "");
@@ -60,58 +60,64 @@ ${sanitizedText}`;
 
   try {
     let apiRes;
-    let success = false;
     let errBody = "";
-
-    const fetchOptions = {
-      method: "POST",
-      // Add these two lines inside your headers object:
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-          "HTTP-Referer": "https://naturize-web.vercel.app", // <--- Add this
-          "X-Title": "Naturize AI"                          // <--- Add this
-        },
-      body: JSON.stringify({
-        model: "openai/gpt-oss-120b",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.2,
-        max_tokens: 512,
-        response_format: { type: "json_object" }
-      }),
-    };
-
-    for (let attempt = 1; attempt <= 3; attempt++) {
-            apiRes = await fetch(
-        `https://openrouter.ai/api/v1/chat/completions`,
-        fetchOptions
-           );
-
-      if (apiRes.ok) {
-        success = true;
-        break;
-      }
-
-      errBody = await apiRes.text();
-      if (apiRes.status === 503 || apiRes.status === 429 || apiRes.status === 500) {
-        if (attempt < 3) {
-          await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
-          continue;
+    
+    // Prefer Gemini if available, fallback to OpenRouter
+    if (geminiKey && geminiKey !== "undefined" && geminiKey.trim() !== "") {
+      apiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey.trim()}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.2, maxOutputTokens: 512 },
+          }),
         }
-      }
-      break;
+      );
+    } else {
+      apiRes = await fetch(
+        `https://openrouter.ai/api/v1/chat/completions`,
+        {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${openRouterKey.trim()}`,
+            "HTTP-Referer": "https://naturize-web.vercel.app",
+            "X-Title": "Naturize AI"
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.0-flash-exp:free", // Using a reliable, free model on OpenRouter
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.2,
+            max_tokens: 512,
+            response_format: { type: "json_object" }
+          }),
+        }
+      );
     }
 
-    if (!success) {
-      console.error("Groq API error:", errBody);
-      if (apiRes && apiRes.status === 429) {
+    if (!apiRes.ok) {
+      errBody = await apiRes.text();
+      console.error("AI API error:", errBody);
+      if (apiRes.status === 401 || errBody.includes("Authentication")) {
+        return res.status(502).json({ error: "API Key is invalid or expired. Please check your Vercel environment variables." });
+      }
+      if (apiRes.status === 429) {
         return res.status(429).json({ error: "API quota exceeded. Please try again later." });
       }
       return res.status(502).json({ error: `API error: ${errBody.slice(0, 200)}` });
     }
 
     const data = await apiRes.json();
-    const rawText = data?.choices?.[0]?.message?.content || "";
+    let rawText = "";
+
+    // Extract text depending on which API was used
+    if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+      rawText = data.candidates[0].content.parts[0].text;
+    } else if (data.choices && data.choices[0]?.message?.content) {
+      rawText = data.choices[0].message.content;
+    }
 
     if (!rawText) {
       return res
@@ -138,7 +144,7 @@ ${sanitizedText}`;
           });
         }
       } else {
-        console.error("Failed to parse Gemini response:", rawText);
+        console.error("Failed to parse AI response:", rawText);
         return res
           .status(502)
           .json({ error: "AI returned an unexpected format. Please retry." });
