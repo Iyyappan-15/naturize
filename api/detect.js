@@ -70,7 +70,7 @@ ${sanitizedText}`;
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "llama-4-scout",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.2,
         max_tokens: 512,
