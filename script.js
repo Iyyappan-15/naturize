@@ -21,6 +21,7 @@ const hWordCount   = $('#h-word-count');
 const hCharCount   = $('#h-char-count');
 const hBtn         = $('#h-btn');
 const hOutput      = $('#h-output');
+const toneSelect   = $('#tone-select');
 // hCopyBtn / hClearBtn are rendered dynamically — handled via onclick in renderHumanizedOutput()
 const dInput       = $('#d-input');
 const dBtn         = $('#d-btn');
@@ -77,15 +78,59 @@ function usesLeft(type) {
 }
 
 /* ── 4. API FUNCTIONS ── */
-async function callHumanize(text) {
+async function callHumanize(text, tone = 'professional') {
   const res = await fetch('/api/humanize', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, tone }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return { result: data.result, humanityScore: data.humanityScore ?? 75 };
+}
+
+/* ── DOCX EXPORT ── */
+function exportDocx() {
+  if (!state.lastHumanized) return;
+  try {
+    // Build a simple HTML document for Word
+    const toneLabel = toneSelect ? toneSelect.options[toneSelect.selectedIndex]?.text || 'Professional' : 'Professional';
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head><meta charset="UTF-8"><title>Naturize Export</title></head>
+        <body style="font-family: Calibri, Arial, sans-serif; font-size: 12pt; line-height: 1.6; margin: 2cm;">
+          <h2 style="color: #00c9a7; font-size: 16pt;">Naturize — Humanized Text</h2>
+          <p style="color: #888; font-size: 10pt; margin-bottom: 20px;">Tone: ${escapeHtml(toneLabel)} &bull; Exported from naturize-web.vercel.app</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin-bottom: 20px;" />
+          <p style="font-size: 12pt; line-height: 1.8;">${escapeHtml(state.lastHumanized).replace(/\n/g, '<br/>')}</p>
+        </body>
+      </html>`;
+
+    if (typeof htmlDocx !== 'undefined' && htmlDocx.asBlob) {
+      const blob = htmlDocx.asBlob(htmlContent);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'naturize-export.docx';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('DOCX file downloaded!', 'success');
+    } else {
+      // Fallback: download as plain .txt if library fails
+      const blob = new Blob([state.lastHumanized], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'naturize-export.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Downloaded as .txt (DOCX library loading...)', 'success');
+    }
+  } catch (err) {
+    console.error('DOCX export error:', err);
+    showToast('Export failed. Please try again.', 'error');
+  }
 }
 
 async function callDetect(text) {
@@ -193,13 +238,18 @@ function animateHumanityMeter(score) {
 
 function renderHumanizedOutput({ result, humanityScore }) {
   state.lastHumanized = result;
+  const toneLabel = toneSelect ? toneSelect.options[toneSelect.selectedIndex]?.text || '' : '';
   hOutput.innerHTML = `
     <p class="output-text" id="output-text">${escapeHtml(result)}</p>
     ${renderHumanityMeter(humanityScore)}
-    <div class="output-actions" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;gap:8px">
+    <div class="output-actions" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn--ghost btn--sm" onclick="copyOutput()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         Copy
+      </button>
+      <button class="btn--docx" onclick="exportDocx()" title="Export as Word document">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Export DOCX
       </button>
       <button class="btn btn--ghost btn--sm" onclick="clearOutput()">Clear</button>
     </div>`;
@@ -223,21 +273,26 @@ async function runHumanize() {
   if (text.length > 10000) { showToast('Text too long. Max 10,000 characters.', 'error'); return; }
   if (!canUse('humanize')) { showModal(); return; }
 
+  const tone = toneSelect ? toneSelect.value : 'professional';
+  const toneLabel = toneSelect ? toneSelect.options[toneSelect.selectedIndex]?.text || 'Professional' : 'Professional';
+
   state.hLoading = true;
   hBtn.disabled = true;
+  if (toneSelect) toneSelect.disabled = true;
   renderSkeleton();
 
   try {
-    const { result, humanityScore } = await callHumanize(text);
+    const { result, humanityScore } = await callHumanize(text, tone);
     incrementUsage('humanize');
     renderHumanizedOutput({ result, humanityScore });
-    showToast(`Done! ${usesLeft('humanize')} free uses left today.`, 'success');
+    showToast(`Done with ${toneLabel} tone! ${usesLeft('humanize')} free uses left today.`, 'success');
   } catch (err) {
     renderEmptyOutput();
     showToast(err.message || 'Something went wrong.', 'error');
   } finally {
     state.hLoading = false;
     hBtn.disabled = false;
+    if (toneSelect) toneSelect.disabled = false;
   }
 }
 

@@ -398,3 +398,81 @@ html.light .icon-moon { display: none; }
   margin-top: 4px;
 }
 
+/* ── TONE SELECTOR ── */
+.tone-selector-wrap {
+  margin-top: 14px;
+  margin-bottom: 4px;
+}
+.tone-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.tone-premium-badge {
+  background: linear-gradient(135deg, #00e5c0, #0099ff);
+  color: #0e0e10;
+  font-size: .6rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: .06em;
+  margin-left: 2px;
+}
+.tone-select {
+  width: 100%;
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: .9rem;
+  font-family: var(--font-body);
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.tone-select:focus {
+  border-color: rgba(0,229,192,0.4);
+  box-shadow: 0 0 0 3px rgba(0,229,192,0.08);
+}
+.tone-select:hover { border-color: rgba(255,255,255,0.2); }
+.tone-select option { background: var(--surface2); color: var(--text); }
+html.light .tone-select { background-color: #f0f0f5; }
+html.light .tone-select option { background: #fff; }
+
+/* ── DOCX EXPORT BUTTON ── */
+.btn--docx {
+  background: rgba(0,229,192,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(0,229,192,0.25);
+  font-size: .85rem;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  transition: var(--transition);
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+.btn--docx:hover {
+  background: rgba(0,229,192,0.2);
+  border-color: rgba(0,229,192,0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0,229,192,0.15);
+}
+.btn--docx:disabled { opacity: .45; cursor: not-allowed; transform: none; }

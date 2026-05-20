@@ -170,6 +170,22 @@
                   aria-label="AI text input for humanizer"
                   maxlength="10000"
                 >The implementation of artificial intelligence in modern educational systems represents a significant paradigm shift in pedagogical approaches. Research indicates that adaptive learning algorithms can substantially optimize student outcomes by providing personalized educational experiences. Furthermore, the integration of machine learning technologies facilitates data-driven decision-making processes that enhance institutional effectiveness.</textarea>
+                <!-- Tone Selector -->
+                <div class="tone-selector-wrap">
+                  <label class="tone-label" for="tone-select">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    Writing Tone
+                    <span class="tone-premium-badge">PRO</span>
+                  </label>
+                  <select class="tone-select" id="tone-select" aria-label="Select writing tone">
+                    <option value="professional">🎯 Professional</option>
+                    <option value="casual">😊 Casual</option>
+                    <option value="academic">🎓 Academic</option>
+                    <option value="creative">✨ Creative</option>
+                    <option value="formal">📋 Formal</option>
+                  </select>
+                </div>
+
                 <div class="panel-actions">
                   <button class="btn btn--primary" id="h-btn" aria-label="Humanize text">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
@@ -319,7 +335,7 @@
           <div class="pricing-card pricing-card--premium">
             <div class="pricing-badge">Most Popular</div>
             <div class="pricing-name">Premium</div>
-            <div class="pricing-price">₹199 <span>/ month</span></div>
+            <div class="pricing-price">₹99 <span>/ month</span></div>
             <p class="pricing-desc">For writers, students, and professionals who need unlimited access.</p>
 
             <ul class="pricing-features" aria-label="Premium plan features">
@@ -331,8 +347,8 @@
               <li class="pricing-feature"><span class="check" aria-hidden="true">✓</span> DOCX Export</li>
             </ul>
 
-            <button class="btn btn--upgrade btn--primary" style="width:100%;justify-content:center" aria-label="Upgrade to Premium for 199 rupees per month">
-              Upgrade — ₹199/month
+            <button class="btn btn--upgrade btn--primary" style="width:100%;justify-content:center" id="upgrade-btn" aria-label="Upgrade to Premium for 99 rupees per month">
+              Upgrade — ₹99/month
             </button>
           </div>
 
@@ -379,8 +395,8 @@
         Upgrade to Premium for unlimited AI rewriting and detection — no waiting, no limits, just results.
       </p>
 
-      <button class="btn btn--upgrade" aria-label="Upgrade to Premium for 199 rupees per month">
-        Upgrade — ₹199/month
+      <button class="btn btn--upgrade" id="modal-upgrade-btn" aria-label="Upgrade to Premium for 99 rupees per month">
+        Upgrade — ₹99/month
       </button>
 
       <p style="margin-top:16px;font-size:.8rem;color:var(--muted)">
@@ -392,6 +408,8 @@
   <!-- Toast Container -->
   <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
 
+  <!-- DOCX Export Library -->
+  <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
