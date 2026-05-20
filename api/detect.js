@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       .json({ error: "Input too long. Maximum 10,000 characters allowed." });
   }
 
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY || process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
     console.error("GROQ_API_KEY environment variable not set.");
@@ -65,12 +65,15 @@ ${sanitizedText}`;
 
     const fetchOptions = {
       method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
+      // Add these two lines inside your headers object:
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+          "HTTP-Referer": "https://naturize-web.vercel.app", // <--- Add this
+          "X-Title": "Naturize AI"                          // <--- Add this
+        },
       body: JSON.stringify({
-        model: "llama-4-scout",
+        model: "openai/gpt-oss-120b",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.2,
         max_tokens: 512,
@@ -79,10 +82,10 @@ ${sanitizedText}`;
     };
 
     for (let attempt = 1; attempt <= 3; attempt++) {
-      apiRes = await fetch(
-        `https://api.groq.com/openai/v1/chat/completions`,
+            apiRes = await fetch(
+        `https://openrouter.ai/api/v1/chat/completions`,
         fetchOptions
-      );
+           );
 
       if (apiRes.ok) {
         success = true;

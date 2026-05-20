@@ -49,7 +49,7 @@ ${sanitizedText}`;
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "llama-4-scout",
+        model: "openai/gpt-oss-120b",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 2048,
@@ -59,7 +59,7 @@ ${sanitizedText}`;
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       apiRes = await fetch(
-        `https://api.groq.com/openai/v1/chat/completions`,
+        `https://openrouter.ai/api/v1/chat/completions`,
         fetchOptions
       );
 
