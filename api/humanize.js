@@ -16,9 +16,9 @@ export default async function handler(req, res) {
   if (text.trim().length > 10000)
     return res.status(400).json({ error: "Input too long. Maximum 10,000 characters allowed." });
 
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY || process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    console.error("GROQ_API_KEY environment variable not set.");
+    console.error("API key environment variable not set.");
     return res.status(500).json({ error: "Server configuration error." });
   }
 
@@ -46,7 +46,9 @@ ${sanitizedText}`;
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://naturize-web.vercel.app",
+        "X-Title": "Naturize AI"
       },
       body: JSON.stringify({
         model: "openai/gpt-oss-120b",
