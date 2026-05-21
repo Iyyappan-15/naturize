@@ -181,84 +181,67 @@ function computeScore(stats) {
   let aiScore = 0;
   const signals = [];
 
-  // ── 1. BURSTINESS (30 points max) — most reliable signal
-  if (stats.burstiness < 0.15) {
-    aiScore += 30;
+  // ── 1. BURSTINESS (45 points max) — AI is famously uniform
+  if (stats.burstiness < 0.20) {
+    aiScore += 45;
     signals.push("Extremely uniform sentence lengths — strong AI pattern.");
-  } else if (stats.burstiness < 0.30) {
-    aiScore += 22;
+  } else if (stats.burstiness < 0.35) {
+    aiScore += 30;
     signals.push("Low sentence length variation, consistent with AI generation.");
   } else if (stats.burstiness < 0.45) {
-    aiScore += 12;
+    aiScore += 15;
     signals.push("Moderate sentence variation — inconclusive.");
   } else if (stats.burstiness < 0.65) {
-    aiScore += 3;
+    aiScore += 5;
     signals.push("Good sentence burstiness — leans toward human writing.");
   } else {
     aiScore += 0;
     signals.push("High sentence burstiness — strong indicator of human writing.");
   }
 
-  // ── 2. AI SIGNATURE PHRASES (25 points max) — linguistic fingerprint
-  if (stats.aiPhraseCount >= 5) {
+  // ── 2. AI SIGNATURE PHRASES (40 points max) — linguistic fingerprint
+  if (stats.aiPhraseCount >= 4) {
+    aiScore += 40;
+    signals.push(`${stats.aiPhraseCount} AI-signature phrases detected (e.g., "furthermore", "leverage").`);
+  } else if (stats.aiPhraseCount >= 2) {
     aiScore += 25;
-    signals.push(`${stats.aiPhraseCount} AI-signature phrases detected (e.g., "furthermore", "leverage", "delve").`);
-  } else if (stats.aiPhraseCount >= 3) {
-    aiScore += 16;
     signals.push(`${stats.aiPhraseCount} known AI-favored phrases found.`);
-  } else if (stats.aiPhraseCount === 2) {
-    aiScore += 8;
-    signals.push("A couple of commonly AI-used phrases found.");
   } else if (stats.aiPhraseCount === 1) {
-    aiScore += 3;
-    signals.push("One AI-associated phrase found — not conclusive on its own.");
+    aiScore += 10;
+    signals.push("One AI-associated phrase found.");
   } else {
     aiScore += 0;
     signals.push("No AI signature phrases detected.");
   }
 
   // ── 3. VOCABULARY DIVERSITY / TTR (20 points max)
-  if (stats.totalWords > 50) { // Only meaningful for longer texts
-    if (stats.ttr < 0.40) {
+  if (stats.totalWords > 40) {
+    if (stats.ttr < 0.45) {
       aiScore += 20;
       signals.push("Low vocabulary diversity — AI models frequently repeat words.");
     } else if (stats.ttr < 0.55) {
       aiScore += 12;
       signals.push("Below-average vocabulary diversity.");
-    } else if (stats.ttr < 0.70) {
-      aiScore += 4;
-      signals.push("Average vocabulary diversity.");
     } else {
       aiScore += 0;
-      signals.push("High vocabulary diversity — typical of human writing.");
     }
   }
 
-  // ── 4. FIRST-PERSON PRONOUN ABSENCE (15 points max)
-  if (stats.totalWords > 80) {
-    if (stats.firstPersonRatio < 0.003) {
-      aiScore += 15;
-      signals.push("No first-person pronouns (I, me, we) — AI rarely uses these unless prompted.");
-    } else if (stats.firstPersonRatio < 0.012) {
-      aiScore += 6;
-      signals.push("Very low first-person pronoun usage.");
-    } else {
-      aiScore += 0;
-      signals.push("Natural first-person pronoun usage — consistent with human authorship.");
-    }
+  // ── 4. FIRST-PERSON PRONOUN ABSENCE (10 points max)
+  if (stats.totalWords > 60 && stats.firstPersonRatio < 0.005) {
+    aiScore += 10;
+    signals.push("No first-person pronouns (I, me, we) — AI rarely uses these.");
   }
 
-  // ── 5. CONTRACTION ABSENCE (5 points max)
-  // AI typically avoids contractions in formal text
-  if (stats.totalWords > 60 && stats.contractionCount === 0) {
-    aiScore += 5;
-    signals.push("No contractions used — AI often avoids them.");
+  // ── 5. CONTRACTION ABSENCE (10 points max)
+  if (stats.totalWords > 50 && stats.contractionCount === 0) {
+    aiScore += 10;
+    signals.push("No contractions used — AI typically avoids them.");
   }
 
-  // ── 6. UNIFORM SENTENCE LENGTH BONUS (5 points)
-  // AI sentences cluster around 18-25 words AND are uniform
-  if (stats.avgSentenceLength >= 17 && stats.avgSentenceLength <= 26 && stats.burstiness < 0.35) {
-    aiScore += 5;
+  // ── 6. UNIFORM SENTENCE LENGTH BONUS (10 points)
+  if (stats.avgSentenceLength >= 15 && stats.avgSentenceLength <= 28 && stats.burstiness < 0.35) {
+    aiScore += 10;
     signals.push(`Consistent sentence length of ~${stats.avgSentenceLength.toFixed(0)} words — typical AI pacing.`);
   }
 
