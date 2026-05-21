@@ -1,7 +1,6 @@
-// /api/humanize.js — Naturize Humanizer v5 (Deep Bypass Engine)
-// Strategy: Bypassing advanced detectors (Phrasly, Originality, Turnitin) requires
-// manipulating Token Perplexity and Reading Level, NOT just adding slang.
-// We force an 8th-9th grade reading level, high burstiness, and active voice.
+// /api/humanize.js — Naturize Humanizer v6 (Semantic Bypass Engine)
+// Strategy: Balance high semantic retention (don't lose the meaning) with 
+// high perplexity (unpredictable vocabulary) and concise bursty structures.
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -24,42 +23,40 @@ export default async function handler(req, res) {
   const sanitized = text.trim().replace(/[<>]/g, "");
   
   // ─────────────────────────────────────────────────────────────────────────
-  // THE DEEP BYPASS PROMPT
-  // AI detectors (like Phrasly) flag high-school/college level text with perfect grammar.
-  // The secret to bypassing them is targeting a lower reading level (8th grade),
-  // forcing active voice, and explicitly banning predictable n-grams.
+  // THE SEMANTIC BYPASS PROMPT (v6)
+  // Fixes the issue where the AI hallucinated or strayed from the original meaning.
+  // We force exact meaning retention, slight conciseness, and high burstiness.
   // ─────────────────────────────────────────────────────────────────────────
   
-  const systemMessage = `You are an expert human editor. Your job is to completely rewrite the provided text so it bypasses all AI detectors (like Turnitin, Originality.ai, and Phrasly) scoring 100% human. 
+  const systemMessage = `You are an expert ghostwriter. Your job is to rewrite the provided text so it bypasses all AI detectors, scoring 100% human, WHILE RETAINING THE EXACT ORIGINAL MEANING.
 
-To achieve this, you MUST follow these forensic rules:
-1. READING LEVEL: Write at an 8th-to-9th grade reading level. Do not use complex, multi-clause sentences.
-2. PERPLEXITY: Avoid standard AI vocabulary. Do NOT use words like: furthermore, moreover, crucial, vital, delve, multifaceted, dynamic, testament, tapestry, landscape, resonate, navigate, leverage, utilize, seamless, foster.
-3. BURSTINESS: Strictly alternate between very short sentences (4-6 words) and medium sentences (10-15 words). Never write three sentences of the same length in a row.
-4. SYNTAX: Use active voice only. Avoid passive voice completely.
-5. IMPERFECTIONS: Real humans don't write perfectly. Start a few sentences with "And", "But", or "Because". Use contractions heavily (don't, it's, they're).
-6. TONE: Avoid overly dramatic colloquialisms (do not use "honestly", "look", "let's be real"). Just write simple, clear, direct human text.
-7. Output ONLY the final rewritten text. No introductions, no explanations.`;
+Follow these rules perfectly:
+1. SEMANTIC RETENTION: Do NOT hallucinate, do not add new information, and do not lose the original core message. Keep the exact same facts and arguments.
+2. CONCISENESS: Humans write more efficiently than AI. Make the final text slightly shorter and punchier than the original. Remove redundant filler.
+3. BURSTINESS: Vary sentence length drastically. Write a very short sentence (4-6 words). Follow it with a longer, explanatory one.
+4. VOCABULARY: Do NOT use AI-signature words (furthermore, moreover, crucial, vital, delve, multifaceted, dynamic, leverage, utilize, seamless, foster, testament, landscape). Use natural, everyday professional English.
+5. SYNTAX: Use active voice. Use contractions naturally (don't, it's, they're).
+6. Output ONLY the rewritten text. No introductions, no explanations.`;
 
   let toneInstruction = "";
   switch(tone) {
     case "academic":
-      toneInstruction = "Maintain an academic focus, but simplify the language dramatically. Write as if explaining a concept clearly to a smart high school student. Avoid academic jargon.";
+      toneInstruction = "Tone: Academic but accessible. Keep the scholarly meaning, but remove the dense jargon. Explain it clearly.";
       break;
     case "casual":
-      toneInstruction = "Make it sound like a direct, casual email to a colleague. Very natural, simple words.";
+      toneInstruction = "Tone: Casual and relaxed. Write like you are speaking directly to a colleague. Use everyday language.";
       break;
     case "creative":
-      toneInstruction = "Tell it like a story. Use concrete, visual nouns. Short, punchy pacing.";
+      toneInstruction = "Tone: Creative and engaging. Use active verbs and strong nouns to keep the reader interested.";
       break;
     case "formal":
-      toneInstruction = "Keep it professional and polite, but completely strip out corporate jargon and buzzwords. Use plain, simple English.";
+      toneInstruction = "Tone: Formal and direct. Strip out all corporate fluff. Be clear, polite, and authoritative.";
       break;
     default:
-      toneInstruction = "Keep it professional but highly accessible. Clear, plain English.";
+      toneInstruction = "Tone: Professional and clear. Accessible, everyday professional English.";
   }
 
-  const userMessage = `${toneInstruction}\n\nRewrite this text completely applying the bypass rules:\n\n${sanitized}`;
+  const userMessage = `${toneInstruction}\n\nRewrite this text applying the rules above:\n\n${sanitized}`;
 
   const makeRequest = async (model) => fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -73,11 +70,11 @@ To achieve this, you MUST follow these forensic rules:
         { role: "system", content: systemMessage },
         { role: "user", content: userMessage }
       ],
-      temperature: 0.85, 
+      temperature: 0.75, // Lowered slightly to ensure it doesn't hallucinate or lose meaning
       top_p: 0.9,
       max_tokens: 3000,
-      frequency_penalty: 0.3,
-      presence_penalty: 0.3,
+      frequency_penalty: 0.4,
+      presence_penalty: 0.2,
     }),
   });
 
