@@ -71,7 +71,7 @@
         <a href="#tool" role="listitem">Humanizer</a>
         <a href="#tool" role="listitem">Detector</a>
         <a href="#features" role="listitem">Features</a>
-        <a href="#upgrade" role="listitem">Pricing</a>
+        <a href="#donate" role="listitem">Donate</a>
       </div>
 
       <div class="nav-right">
@@ -89,7 +89,7 @@
       <a href="#tool">Humanizer</a>
       <a href="#tool">Detector</a>
       <a href="#features">Features</a>
-      <a href="#upgrade">Pricing</a>
+      <a href="#donate">Donate</a>
     </nav>
   </header>
 
@@ -181,7 +181,6 @@
                   <label class="tone-label" for="tone-select">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                     Writing Tone
-                    <span class="tone-premium-badge">PRO</span>
                   </label>
                   <select class="tone-select" id="tone-select" aria-label="Select writing tone">
                     <option value="professional">🎯 Professional</option>
@@ -305,59 +304,21 @@
     </section>
 
     <!-- ═══════════════════════════════════════
-         PRICING
+         DONATE
     ═══════════════════════════════════════ -->
-    <section class="pricing-section" id="upgrade" aria-labelledby="pricing-heading">
+    <section class="pricing-section" id="donate" aria-labelledby="donate-heading">
       <div class="container" style="text-align:center">
-        <div class="section-label">Pricing</div>
-        <h2 class="reveal" id="pricing-heading" style="margin-bottom:12px">Simple, honest pricing</h2>
+        <div class="section-label">Support Naturize</div>
+        <h2 class="reveal" id="donate-heading" style="margin-bottom:12px">Buy me a coffee ☕</h2>
         <p class="reveal" style="margin-bottom:48px;max-width:480px;margin-left:auto;margin-right:auto">
-          Start free. Upgrade when you need more.
+          Naturize is completely free to use. If it helped you save time, consider supporting the server costs!
         </p>
 
-        <div class="pricing-grid reveal">
-
-          <!-- Free -->
-          <div class="pricing-card">
-            <div class="pricing-name">Free</div>
-            <div class="pricing-price">₹0 <span>/ forever</span></div>
-            <p class="pricing-desc">Perfect for light use and trying it out.</p>
-
-            <ul class="pricing-features" aria-label="Free plan features">
-              <li class="pricing-feature"><span class="check" aria-hidden="true">✓</span> 3 uses/day per tool</li>
-              <li class="pricing-feature"><span class="check" aria-hidden="true">✓</span> AI Humanizer</li>
-              <li class="pricing-feature"><span class="check" aria-hidden="true">✓</span> AI Detector</li>
-              <li class="pricing-feature"><span class="cross" aria-hidden="true">✕</span> <span style="color:var(--muted);opacity:.5">Priority Speed</span></li>
-              <li class="pricing-feature"><span class="cross" aria-hidden="true">✕</span> <span style="color:var(--muted);opacity:.5">Tone Selector</span></li>
-              <li class="pricing-feature"><span class="cross" aria-hidden="true">✕</span> <span style="color:var(--muted);opacity:.5">DOCX Export</span></li>
-            </ul>
-
-            <button class="btn btn--ghost" style="width:100%;justify-content:center" data-scroll="#tool" aria-label="Get started for free">
-              Get Started Free
-            </button>
-          </div>
-
-          <!-- Premium -->
-          <div class="pricing-card pricing-card--premium">
-            <div class="pricing-badge">Most Popular</div>
-            <div class="pricing-name">Premium</div>
-            <div class="pricing-price">₹99 <span>/ month</span></div>
-            <p class="pricing-desc">For writers, students, and professionals who need unlimited access.</p>
-
-            <ul class="pricing-features" aria-label="Premium plan features">
-              <li class="pricing-feature"><span class="check" aria-hidden="true">✓</span> Unlimited uses/day</li>
-              <li class="pricing-feature"><span class="check" aria-hidden="true">✓</span> AI Humanizer</li>
-              <li class="pricing-feature"><span class="check" aria-hidden="true">✓</span> AI Detector</li>
-              <li class="pricing-feature"><span class="check" aria-hidden="true">✓</span> Priority Speed</li>
-              <li class="pricing-feature"><span class="check" aria-hidden="true">✓</span> Tone Selector</li>
-              <li class="pricing-feature"><span class="check" aria-hidden="true">✓</span> DOCX Export</li>
-            </ul>
-
-            <button class="btn btn--upgrade btn--primary" style="width:100%;justify-content:center" id="upgrade-btn" aria-label="Upgrade to Premium for 99 rupees per month">
-              Upgrade — ₹99/month
-            </button>
-          </div>
-
+        <div class="reveal">
+          <a href="#" target="_blank" rel="noopener" class="btn btn--primary" style="display:inline-flex;padding:12px 24px;font-size:1.1rem;border-radius:var(--radius-md);text-decoration:none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+            Buy me a coffee
+          </a>
         </div>
       </div>
     </section>
@@ -383,30 +344,31 @@
   </footer>
 
   <!-- ═══════════════════════════════════════
-       PREMIUM MODAL
+       LIMIT MODAL
   ═══════════════════════════════════════ -->
   <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-desc">
     <div class="modal">
-      <button class="modal-close" id="modal-close" aria-label="Close upgrade modal">
+      <button class="modal-close" id="modal-close" aria-label="Close modal">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
           <path d="M18 6L6 18M6 6l12 12"/>
         </svg>
       </button>
 
       <div class="modal-icon" aria-hidden="true">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       </div>
-      <h2 id="modal-title">You've hit your daily free limit.</h2>
+      <h2 id="modal-title">Session Expired</h2>
       <p id="modal-desc">
-        Upgrade to Premium for unlimited AI rewriting and detection — no waiting, no limits, just results.
+        You've used your 6 free requests for today. Please come back tomorrow!<br><br>
+        If Naturize has been helpful to you, would you mind making a small donation to keep the servers running?
       </p>
 
-      <button class="btn btn--upgrade" id="modal-upgrade-btn" aria-label="Upgrade to Premium for 99 rupees per month">
-        Upgrade — ₹99/month
-      </button>
+      <a href="#" target="_blank" rel="noopener" class="btn btn--upgrade btn--primary" id="modal-donate-btn" style="text-decoration:none;display:flex;justify-content:center;width:100%" aria-label="Buy me a coffee">
+        Buy me a coffee ☕
+      </a>
 
       <p style="margin-top:16px;font-size:.8rem;color:var(--muted)">
-        Resets tomorrow · Cancel anytime
+        Limits reset at midnight locally.
       </p>
     </div>
   </div>

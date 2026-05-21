@@ -50,7 +50,7 @@ const state = {
 };
 
 /* ── 3. LOCALSTORAGE / FREE TIER ── */
-const DAILY_LIMIT = 3;
+const DAILY_LIMIT = 6;
 
 function getUsage(type) {
   const today = new Date().toISOString().slice(0, 10);
