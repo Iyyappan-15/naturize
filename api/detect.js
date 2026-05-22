@@ -32,33 +32,52 @@ export default async function handler(req, res) {
   let llmScore = null;
   let llmReasons = [];
 
-  const classifyPrompt = `You are an expert AI text detector. Your job is to analyze a text sample and determine the probability (0 to 100) that it was written by an AI (like ChatGPT, Gemini, Claude, etc.) rather than a human.
+  const classifyPrompt = `You are a forensic linguistics expert specializing in detecting AI-generated text. Your job is to analyze WRITING STYLE only — not content quality, not factual accuracy, not grammar correctness.
 
-Analyze these specific signals:
-1. STRUCTURE: Does it follow a perfectly balanced, formulaic structure (intro → points → conclusion)?
-2. VOCABULARY: Does it use overly formal, corporate, or "safe" word choices? Are sentences suspiciously well-formed?
-3. PERSONALITY: Is there genuine personal voice, real opinion, or emotion? Or does it sound neutral and objective like a Wikipedia article?
-4. HEDGING: Does it over-qualify statements with phrases like "it's worth noting", "it's important to understand", "it's crucial to"?
-5. RHYTHM: Are sentences suspiciously well-paced with no awkward phrasing, typos, or casual flow breaks?
-6. SPECIFICITY: Does it use specific real-world details, anecdotes, or examples? Or are examples vague and generic?
+CRITICAL RULES:
+- Grammatical errors, typos, and awkward phrasing are STRONG HUMAN signals. Humans make mistakes. AI almost never does.
+- Factual errors or wrong information are HUMAN signals. AI tries to be accurate.
+- Simple, short, or unsophisticated writing does NOT mean AI. Children and students write simply too.
+- DO NOT penalize text for being short, simple, or factually wrong.
+- DO NOT reward text for being detailed or well-structured — that could be a human expert.
+
+REAL AI WRITING PATTERNS (raise the score):
+- Perfect grammar with zero errors
+- Formulaic structure: brief intro → numbered/bulleted points → summary conclusion
+- Overly formal or corporate vocabulary (leverage, facilitate, furthermore, moreover, it is important to note)
+- Sentences that are all similar in length and perfectly balanced
+- No contractions (don't, it's, can't) — AI prefers "do not", "it is", "cannot"
+- Vague, generic examples with no specific personal experience
+- Suspiciously smooth transitions between every sentence
+- No casual phrases, slang, or informal language at all
+
+REAL HUMAN WRITING PATTERNS (lower the score):
+- Grammatical mistakes, typos, or spelling errors
+- Factual errors or wrong information
+- Awkward or informal phrasing
+- Sentences of very different lengths mixed together
+- Contractions and casual language
+- Personal opinions stated bluntly without over-qualifying
+- Abrupt topic changes or uneven flow
+- Simple vocabulary without trying to sound impressive
 
 TEXT TO ANALYZE:
 """
 ${sanitized.slice(0, 3000)}
 """
 
-Based on your expert analysis, return ONLY this JSON with no extra text:
+Based ONLY on writing style (not content quality), return ONLY this JSON:
 {
   "ai_probability": <integer 0-100>,
-  "reasons": ["<specific reason 1 in max 15 words>", "<specific reason 2 in max 15 words>", "<specific reason 3 in max 15 words>"]
+  "reasons": ["<style-based reason 1, max 12 words>", "<style-based reason 2, max 12 words>", "<style-based reason 3, max 12 words>"]
 }
 
-Where ai_probability means:
-- 0-20: Clearly human written
-- 21-40: Likely human with some AI patterns
-- 41-60: Mixed or uncertain
-- 61-80: Likely AI generated
-- 81-100: Almost certainly AI generated`;
+Score guide:
+- 0-20: Clearly human (errors, casual tone, imperfect)
+- 21-40: Likely human with some polished phrasing
+- 41-60: Mixed signals, hard to tell
+- 61-80: Likely AI (too perfect, formulaic, formal)
+- 81-100: Almost certainly AI (zero errors, perfect structure, corporate tone)`;
 
   try {
     const apiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
