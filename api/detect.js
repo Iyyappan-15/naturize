@@ -182,21 +182,25 @@ function computeScore(stats) {
   const signals = [];
 
   // ── 1. BURSTINESS (45 points max) — AI is famously uniform
-  if (stats.burstiness < 0.20) {
-    aiScore += 45;
-    signals.push("Extremely uniform sentence lengths — strong AI pattern.");
-  } else if (stats.burstiness < 0.35) {
-    aiScore += 30;
-    signals.push("Low sentence length variation, consistent with AI generation.");
-  } else if (stats.burstiness < 0.45) {
-    aiScore += 15;
-    signals.push("Moderate sentence variation — inconclusive.");
-  } else if (stats.burstiness < 0.65) {
-    aiScore += 5;
-    signals.push("Good sentence burstiness — leans toward human writing.");
+  if (stats.sentenceCount > 2) {
+    if (stats.burstiness < 0.20) {
+      aiScore += 45;
+      signals.push("Extremely uniform sentence lengths — strong AI pattern.");
+    } else if (stats.burstiness < 0.35) {
+      aiScore += 30;
+      signals.push("Low sentence length variation, consistent with AI generation.");
+    } else if (stats.burstiness < 0.45) {
+      aiScore += 15;
+      signals.push("Moderate sentence variation — inconclusive.");
+    } else if (stats.burstiness < 0.65) {
+      aiScore += 5;
+      signals.push("Good sentence burstiness — leans toward human writing.");
+    } else {
+      aiScore += 0;
+      signals.push("High sentence burstiness — strong indicator of human writing.");
+    }
   } else {
-    aiScore += 0;
-    signals.push("High sentence burstiness — strong indicator of human writing.");
+    signals.push("Text is very short, making sentence variation hard to measure.");
   }
 
   // ── 2. AI SIGNATURE PHRASES (40 points max) — linguistic fingerprint
@@ -240,7 +244,7 @@ function computeScore(stats) {
   }
 
   // ── 6. UNIFORM SENTENCE LENGTH BONUS (10 points)
-  if (stats.avgSentenceLength >= 15 && stats.avgSentenceLength <= 28 && stats.burstiness < 0.35) {
+  if (stats.sentenceCount > 2 && stats.avgSentenceLength >= 15 && stats.avgSentenceLength <= 28 && stats.burstiness < 0.35) {
     aiScore += 10;
     signals.push(`Consistent sentence length of ~${stats.avgSentenceLength.toFixed(0)} words — typical AI pacing.`);
   }
