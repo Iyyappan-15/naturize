@@ -1,7 +1,8 @@
-// /api/detect.js — Naturize AI Detector v3
-// Architecture: Real statistical NLP engine (perplexity + burstiness + vocabulary)
-//               LLM is ONLY used to generate human-readable explanations — NOT to score.
-// This is how professional detectors (GPTZero, Copyleaks) actually work.
+// /api/detect.js — Naturize AI Detector v4 (Hybrid Engine)
+// Architecture: Hybrid scoring model
+//   - 70% weight: LLM semantic analysis (LLaMA reads and classifies the text directly)
+//   - 30% weight: Statistical NLP engine (burstiness, vocabulary, AI phrases)
+// The LLM component catches what statistics miss in modern GPT-4 output.
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -23,35 +24,43 @@ export default async function handler(req, res) {
 
   const sanitized = text.trim().replace(/[<>]/g, "");
 
-  // ── PHASE 1: STATISTICAL ANALYSIS (deterministic, no AI bias) ─────────────
+  // ── PHASE 1: STATISTICAL ANALYSIS (30% weight) ────────────────────────────
   const stats = extractFeatures(sanitized);
-  const { score, signals } = computeScore(stats);
+  const { score: statScore, signals: statSignals } = computeScore(stats);
 
-  const verdict =
-    score >= 80 ? "AI-Generated" :
-    score >= 60 ? "Likely AI" :
-    score >= 40 ? "Mixed" :
-    score >= 20 ? "Likely Human" :
-    "Human";
+  // ── PHASE 2: LLM SEMANTIC CLASSIFICATION (70% weight) ─────────────────────
+  let llmScore = null;
+  let llmReasons = [];
 
-  // ── PHASE 2: LLM generates readable reasons ONLY (does NOT control the score) ─
+  const classifyPrompt = `You are an expert AI text detector. Your job is to analyze a text sample and determine the probability (0 to 100) that it was written by an AI (like ChatGPT, Gemini, Claude, etc.) rather than a human.
+
+Analyze these specific signals:
+1. STRUCTURE: Does it follow a perfectly balanced, formulaic structure (intro → points → conclusion)?
+2. VOCABULARY: Does it use overly formal, corporate, or "safe" word choices? Are sentences suspiciously well-formed?
+3. PERSONALITY: Is there genuine personal voice, real opinion, or emotion? Or does it sound neutral and objective like a Wikipedia article?
+4. HEDGING: Does it over-qualify statements with phrases like "it's worth noting", "it's important to understand", "it's crucial to"?
+5. RHYTHM: Are sentences suspiciously well-paced with no awkward phrasing, typos, or casual flow breaks?
+6. SPECIFICITY: Does it use specific real-world details, anecdotes, or examples? Or are examples vague and generic?
+
+TEXT TO ANALYZE:
+"""
+${sanitized.slice(0, 3000)}
+"""
+
+Based on your expert analysis, return ONLY this JSON with no extra text:
+{
+  "ai_probability": <integer 0-100>,
+  "reasons": ["<specific reason 1 in max 15 words>", "<specific reason 2 in max 15 words>", "<specific reason 3 in max 15 words>"]
+}
+
+Where ai_probability means:
+- 0-20: Clearly human written
+- 21-40: Likely human with some AI patterns
+- 41-60: Mixed or uncertain
+- 61-80: Likely AI generated
+- 81-100: Almost certainly AI generated`;
+
   try {
-    const reasonsPrompt = `You are a forensic linguistics expert. You have already computed statistical metrics from a text sample. Your ONLY job is to write 3 concise, specific, human-readable reasons explaining the result — based solely on the numbers given. Do NOT re-score or override the verdict.
-
-Computed statistics:
-- Verdict: ${verdict} (AI probability: ${score}/100)
-- Sentence burstiness (length variation): ${stats.burstiness.toFixed(3)} (0=AI-uniform, 1+=human-varied)
-- Type-Token Ratio (vocab diversity): ${stats.ttr.toFixed(3)} (0=repetitive, 1=all unique)
-- AI signature phrase count: ${stats.aiPhraseCount} (known AI overused words detected)
-- First-person pronoun ratio: ${(stats.firstPersonRatio * 100).toFixed(2)}%
-- Average sentence length: ${stats.avgSentenceLength.toFixed(1)} words
-- Passive voice instances: ${stats.passiveCount}
-- Total word count: ${stats.totalWords}
-
-Write 3 short reasons (max 15 words each) explaining the verdict. Be specific and reference the actual data.
-
-Return ONLY this JSON: {"reasons": ["reason1", "reason2", "reason3"]}`;
-
     const apiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -60,14 +69,12 @@ Return ONLY this JSON: {"reasons": ["reason1", "reason2", "reason3"]}`;
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-        messages: [{ role: "user", content: reasonsPrompt }],
-        temperature: 0.2,
-        max_tokens: 250,
+        messages: [{ role: "user", content: classifyPrompt }],
+        temperature: 0.1,
+        max_tokens: 300,
         response_format: { type: "json_object" }
       })
     });
-
-    let reasons = signals; // default to computed signals if LLM fails
 
     if (apiRes.ok) {
       const data = await apiRes.json();
@@ -75,27 +82,47 @@ Return ONLY this JSON: {"reasons": ["reason1", "reason2", "reason3"]}`;
       try {
         let cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
         const parsed = JSON.parse(cleaned);
-        if (Array.isArray(parsed.reasons) && parsed.reasons.length >= 1) {
-          reasons = parsed.reasons.slice(0, 3).map(r => String(r).trim()).filter(r => r.length > 3);
-          if (reasons.length === 0) reasons = signals;
+
+        if (typeof parsed.ai_probability === "number") {
+          llmScore = Math.min(100, Math.max(0, Math.round(parsed.ai_probability)));
         }
-      } catch { /* use fallback signals */ }
+        if (Array.isArray(parsed.reasons) && parsed.reasons.length >= 1) {
+          llmReasons = parsed.reasons.slice(0, 3).map(r => String(r).trim()).filter(r => r.length > 3);
+        }
+      } catch { /* fall back to stats only */ }
     }
-
-    return res.status(200).json({ score, verdict, reasons });
-
   } catch (err) {
-    console.error("Detect handler error:", err);
-    // Even if LLM fails, we return the statistically computed result
-    return res.status(200).json({ score, verdict, reasons: signals });
+    console.error("LLM classify error:", err);
   }
+
+  // ── PHASE 3: COMBINE SCORES ────────────────────────────────────────────────
+  let finalScore;
+  let reasons;
+
+  if (llmScore !== null) {
+    // Hybrid: 70% LLM + 30% statistical
+    finalScore = Math.min(100, Math.max(0, Math.round((llmScore * 0.70) + (statScore * 0.30))));
+    reasons = llmReasons.length > 0 ? llmReasons : statSignals;
+  } else {
+    // LLM failed — fall back to pure statistics
+    finalScore = statScore;
+    reasons = statSignals;
+  }
+
+  const verdict =
+    finalScore >= 80 ? "AI-Generated" :
+    finalScore >= 60 ? "Likely AI" :
+    finalScore >= 40 ? "Mixed" :
+    finalScore >= 20 ? "Likely Human" :
+    "Human";
+
+  return res.status(200).json({ score: finalScore, verdict, reasons });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// FEATURE EXTRACTION — Real NLP statistics, no guessing
+// FEATURE EXTRACTION — Real NLP statistics
 // ═══════════════════════════════════════════════════════════════════════════
 function extractFeatures(text) {
-  // ── Sentence parsing
   const rawSentences = text.match(/[^.!?\n]+[.!?]+/g) || [text];
   const sentences = rawSentences.map(s => s.trim()).filter(s => s.length > 3);
   const sentenceLengths = sentences.map(s =>
@@ -103,26 +130,21 @@ function extractFeatures(text) {
   );
   const sentenceCount = sentences.length;
 
-  // ── Average sentence length
   const avgSentenceLength = sentenceCount > 0
     ? sentenceLengths.reduce((a, b) => a + b, 0) / sentenceCount
     : 0;
 
-  // ── Burstiness: Coefficient of Variation (std_dev / mean)
-  // Low CV = uniform = AI-like. High CV = varied = human-like.
   const variance = sentenceCount > 1
     ? sentenceLengths.reduce((sum, l) => sum + Math.pow(l - avgSentenceLength, 2), 0) / sentenceCount
     : 0;
   const stdDev = Math.sqrt(variance);
   const burstiness = avgSentenceLength > 0 ? stdDev / avgSentenceLength : 0;
 
-  // ── Vocabulary analysis
   const words = text.toLowerCase().match(/\b[a-z']+\b/g) || [];
   const totalWords = words.length;
   const uniqueWords = new Set(words).size;
-  const ttr = totalWords > 0 ? uniqueWords / totalWords : 0; // Type-Token Ratio
+  const ttr = totalWords > 0 ? uniqueWords / totalWords : 0;
 
-  // ── AI signature phrases (extensively researched list of LLM-overused terms)
   const AI_SIGNATURES = [
     "furthermore", "moreover", "additionally", "in conclusion", "in summary",
     "it is important to note", "it should be noted", "it is worth noting",
@@ -141,47 +163,31 @@ function extractFeatures(text) {
   const lowerText = text.toLowerCase();
   const aiPhraseCount = AI_SIGNATURES.filter(phrase => lowerText.includes(phrase)).length;
 
-  // ── First-person pronouns (humans naturally use I, me, my, we, our)
   const firstPersonMatches = text.match(/\b(i|me|my|mine|myself|we|us|our|ours)\b/gi) || [];
   const firstPersonCount = firstPersonMatches.length;
   const firstPersonRatio = totalWords > 0 ? firstPersonCount / totalWords : 0;
 
-  // ── Passive voice (AI overuses passive: "is done", "was created", "are being")
   const passiveMatches = text.match(/\b(is|are|was|were|be|been|being)\s+\w+ed\b/gi) || [];
   const passiveCount = passiveMatches.length;
 
-  // ── Punctuation diversity (humans use !, ?, ;, : more naturally)
-  const hasDiversePunctuation = /[!;:]/.test(text) && /\?/.test(text);
-
-  // ── Contraction usage (I'm, don't, can't — humans use these, AI avoids them)
   const contractionMatches = text.match(/\b\w+'(t|s|re|ve|ll|d|m)\b/gi) || [];
   const contractionCount = contractionMatches.length;
 
   return {
-    sentenceCount,
-    avgSentenceLength,
-    burstiness,
-    ttr,
-    totalWords,
-    uniqueWords,
-    aiPhraseCount,
-    firstPersonCount,
-    firstPersonRatio,
-    passiveCount,
-    hasDiversePunctuation,
-    contractionCount,
+    sentenceCount, avgSentenceLength, burstiness, ttr,
+    totalWords, uniqueWords, aiPhraseCount,
+    firstPersonCount, firstPersonRatio, passiveCount, contractionCount,
   };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SCORING ENGINE — Weighted statistical model
-// Each feature contributes a weighted amount to the AI probability score (0-100)
+// STATISTICAL SCORING ENGINE (30% of final score)
 // ═══════════════════════════════════════════════════════════════════════════
 function computeScore(stats) {
   let aiScore = 0;
   const signals = [];
 
-  // ── 1. BURSTINESS (45 points max) — AI is famously uniform
+  // 1. BURSTINESS (45 points max)
   if (stats.sentenceCount > 2) {
     if (stats.burstiness < 0.20) {
       aiScore += 45;
@@ -200,10 +206,10 @@ function computeScore(stats) {
       signals.push("High sentence burstiness — strong indicator of human writing.");
     }
   } else {
-    signals.push("Text is very short, making sentence variation hard to measure.");
+    signals.push("Text is very short — sentence variation is hard to measure.");
   }
 
-  // ── 2. AI SIGNATURE PHRASES (40 points max) — linguistic fingerprint
+  // 2. AI SIGNATURE PHRASES (40 points max)
   if (stats.aiPhraseCount >= 4) {
     aiScore += 40;
     signals.push(`${stats.aiPhraseCount} AI-signature phrases detected (e.g., "furthermore", "leverage").`);
@@ -218,7 +224,7 @@ function computeScore(stats) {
     signals.push("No AI signature phrases detected.");
   }
 
-  // ── 3. VOCABULARY DIVERSITY / TTR (20 points max)
+  // 3. VOCABULARY DIVERSITY / TTR (20 points max)
   if (stats.totalWords > 40) {
     if (stats.ttr < 0.45) {
       aiScore += 20;
@@ -226,31 +232,27 @@ function computeScore(stats) {
     } else if (stats.ttr < 0.55) {
       aiScore += 12;
       signals.push("Below-average vocabulary diversity.");
-    } else {
-      aiScore += 0;
     }
   }
 
-  // ── 4. FIRST-PERSON PRONOUN ABSENCE (10 points max)
+  // 4. FIRST-PERSON ABSENCE (10 points max)
   if (stats.totalWords > 60 && stats.firstPersonRatio < 0.005) {
     aiScore += 10;
     signals.push("No first-person pronouns (I, me, we) — AI rarely uses these.");
   }
 
-  // ── 5. CONTRACTION ABSENCE (10 points max)
+  // 5. CONTRACTION ABSENCE (10 points max)
   if (stats.totalWords > 50 && stats.contractionCount === 0) {
     aiScore += 10;
     signals.push("No contractions used — AI typically avoids them.");
   }
 
-  // ── 6. UNIFORM SENTENCE LENGTH BONUS (10 points)
+  // 6. UNIFORM SENTENCE LENGTH BONUS (10 points)
   if (stats.sentenceCount > 2 && stats.avgSentenceLength >= 15 && stats.avgSentenceLength <= 28 && stats.burstiness < 0.35) {
     aiScore += 10;
-    signals.push(`Consistent sentence length of ~${stats.avgSentenceLength.toFixed(0)} words — typical AI pacing.`);
+    signals.push(`Consistent ~${stats.avgSentenceLength.toFixed(0)}-word sentences — typical AI pacing.`);
   }
 
   const finalScore = Math.min(100, Math.max(0, Math.round(aiScore)));
-
-  // Pick 3 most relevant signals
   return { score: finalScore, signals: signals.slice(0, 3) };
 }
