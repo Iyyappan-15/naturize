@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
 
-  const { text, tone = "professional" } = req.body;
+  const { text, tone = "professional", region = "US" } = req.body;
   if (!text || typeof text !== "string" || text.trim().length === 0)
     return res.status(400).json({ error: "Text is required." });
   if (text.trim().length > 10000)
@@ -46,92 +46,41 @@ CORE REWRITE RULES:
 1. SENTENCE RHYTHM VARIATION
 - Aggressively vary sentence lengths
 - Mix short, medium, and long sentences naturally
-- Occasionally use fragments where appropriate
+- occasionally use fragments where appropriate
 - Break predictable sentence patterns
-- Avoid repetitive cadence
 
-2. HUMAN WRITING CHARACTERISTICS
-- Add subtle conversational flow
-- Use natural transitions instead of formal connectors
-- Allow mild imperfection in rhythm
-- Make paragraphs feel naturally paced
-- Avoid textbook-style explanations
-- Avoid robotic smoothness
+2. EXTREMELY SIMPLE VOCABULARY (CRITICAL)
+- Use simple, everyday words.
+- Prefer common vocabulary over complex vocabulary.
+- Do NOT use academic or corporate language unless the user specifically requests an Academic or Formal tone.
+- If a 10-year-old wouldn't use the word, find a simpler alternative.
 
 3. REMOVE AI FINGERPRINTS
 Avoid or replace phrases like:
-- Furthermore
-- Moreover
-- In conclusion
-- It is important to note
-- Delve
-- Leverage
-- Seamless
-- Transformative
-- In today’s fast-paced world
-- Unlock the power of
-- Revolutionary
-- Cutting-edge
-
+- Furthermore, Moreover, Additionally
+- In conclusion, Ultimately
+- It is important to note, It is imperative
+- Delve, Leverage, Seamless, Transformative
+- In today’s fast-paced world, Unlock the power of
+- Revolutionary, Cutting-edge
 Do not use overly corporate, generic, or exaggerated wording.
 
-4. STYLE DIVERSIFICATION
-- Avoid repetitive sentence openings
-- Avoid repeated transition words
-- Vary vocabulary naturally
-- Reduce structural symmetry
-- Use organic phrasing patterns
-- Avoid overly balanced formatting
+4. PUNCTUATION CLEANUP (CRITICAL)
+- Remove unnecessary commas.
+- Remove commas before or after "and" when they are not grammatically required (e.g., instead of "fast, and easy", use "fast and easy").
+- Remove AI-generated punctuation patterns that make text sound unnatural.
 
 5. HUMAN TONE OPTIMIZATION
 The writing should feel:
-- confident
-- natural
-- believable
+- confident, natural, believable
 - emotionally realistic
 - casually intelligent
 - written by a real person with experience
 
-NOT:
-- robotic
-- overly formal
-- excessively optimized
-- generic blog-style
-- corporate marketing tone
-
-6. READABILITY OPTIMIZATION
-- Improve flow between ideas
-- Make the text easy to read aloud
-- Remove unnecessary filler
-- Simplify unnatural complexity
-- Keep the writing engaging
-
-7. ANTI-DETECTION OPTIMIZATION
-Reduce common AI-detection signals:
-- repetitive structure
-- predictable token patterns
-- low sentence variance
-- repeated n-grams
-- over-consistent grammar
-- excessive coherence smoothing
-
-8. OUTPUT REQUIREMENTS
-- Preserve all factual information
-- Preserve original context
-- Do not shorten excessively
-- Do not add fake information
-- Do not change technical meaning
-- Do not use emojis
-- Do not explain changes
-- Output only the rewritten text
-
-9. QUALITY CONTROL BEFORE OUTPUT
-Before finalizing:
-- Check for repetitive phrasing
-- Check sentence-length diversity
-- Remove robotic transitions
-- Ensure natural cadence
-- Ensure the text sounds genuinely human-written`;
+6. OUTPUT REQUIREMENTS
+- Preserve all factual information and the exact meaning.
+- Do not add fake information or explain changes.
+- Output only the rewritten text.`;
 
   let toneInstruction = "";
   switch(tone) {
@@ -151,7 +100,25 @@ Before finalizing:
       toneInstruction = "Tone: Professional and clear. Accessible, everyday professional English.";
   }
 
-  const userMessage = `${toneInstruction}\n\nRewrite this text applying the rules above:\n\n${sanitized}`;
+  let regionInstruction = "";
+  switch(region) {
+    case "UK":
+      regionInstruction = "Region: Use British English spelling (e.g., colour, organise) and phrasing.";
+      break;
+    case "AU":
+      regionInstruction = "Region: Use Australian English spelling and phrasing.";
+      break;
+    case "CA":
+      regionInstruction = "Region: Use Canadian English spelling and phrasing.";
+      break;
+    case "IN":
+      regionInstruction = "Region: Use Indian English phrasing and conventions.";
+      break;
+    default:
+      regionInstruction = "Region: Use American English spelling and phrasing.";
+  }
+
+  const userMessage = `${toneInstruction}\n${regionInstruction}\n\nRewrite this text applying all rules above:\n\n${sanitized}`;
 
   const makeRequest = async (model) => fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -210,6 +177,47 @@ Before finalizing:
     result = result.replace(/\bdo not\b/g, "don't");
     result = result.replace(/\bcannot\b/g, "can't");
     result = result.replace(/\bit is\b/g, "it's");
+    
+    // Regex comma cleanups
+    result = result.replace(/,\s+and\b/g, " and"); // Remove comma before and
+    result = result.replace(/\band\s+,/g, "and "); // Remove comma after and
+    
+    // SECONDARY QUALITY PASS (Llama-3.1-8b)
+    const secondarySys = `You are a strict editor. Your job is to read the provided text and do ONLY three things:
+1. Simplify any overly complex or "corporate" words into simple, everyday 5th-grade vocabulary.
+2. Remove unnecessary commas that disrupt the flow.
+3. Ensure the text flows naturally like a real human wrote it.
+Output ONLY the final polished text, nothing else.`;
+
+    const secondaryUser = `Edit this text:\n\n${result}`;
+    
+    try {
+      const qPass = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${groqKey.trim()}`
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-8b-instant",
+          messages: [
+            { role: "system", content: secondarySys },
+            { role: "user", content: secondaryUser }
+          ],
+          temperature: 0.3,
+          max_tokens: 3000
+        }),
+      });
+      if (qPass.ok) {
+        const qData = await qPass.json();
+        const qResult = qData?.choices?.[0]?.message?.content?.trim();
+        if (qResult && qResult.length > 10) {
+          result = qResult;
+        }
+      }
+    } catch(e) {
+      console.error("Secondary pass failed, using primary result.", e);
+    }
 
     // Estimate score
     const humanityScore = estimateHumanityScore(result);

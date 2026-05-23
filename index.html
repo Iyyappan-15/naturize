@@ -257,19 +257,35 @@
                   aria-label="AI text input for humanizer"
                   maxlength="10000"
                 ></textarea>
-                <!-- Tone Selector -->
-                <div class="tone-selector-wrap">
-                  <label class="tone-label" for="tone-select">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                    Writing Tone
-                  </label>
-                  <select class="tone-select" id="tone-select" aria-label="Select writing tone">
-                    <option value="professional">🎯 Professional</option>
-                    <option value="casual">😊 Casual</option>
-                    <option value="academic">🎓 Academic</option>
-                    <option value="creative">✨ Creative</option>
-                    <option value="formal">📋 Formal</option>
-                  </select>
+                <!-- Selectors -->
+                <div class="selectors-row">
+                  <div class="tone-selector-wrap">
+                    <label class="tone-label" for="tone-select">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      Tone
+                    </label>
+                    <select class="tone-select" id="tone-select" aria-label="Select writing tone">
+                      <option value="professional">🎯 Professional</option>
+                      <option value="casual">😊 Casual</option>
+                      <option value="academic">🎓 Academic</option>
+                      <option value="creative">✨ Creative</option>
+                      <option value="formal">📋 Formal</option>
+                    </select>
+                  </div>
+                  
+                  <div class="tone-selector-wrap">
+                    <label class="tone-label" for="region-select">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                      Region
+                    </label>
+                    <select class="tone-select" id="region-select" aria-label="Select english region">
+                      <option value="US">🇺🇸 American</option>
+                      <option value="UK">🇬🇧 British</option>
+                      <option value="AU">🇦🇺 Australian</option>
+                      <option value="IN">🇮🇳 Indian</option>
+                      <option value="CA">🇨🇦 Canadian</option>
+                    </select>
+                  </div>
                 </div>
 
                 <!-- File Upload -->
@@ -286,6 +302,10 @@
                   <button class="btn btn--primary" id="h-btn" aria-label="Humanize text">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                     Humanize Text
+                  </button>
+                  <button class="btn btn--ghost btn--sm" id="h-history-btn" aria-label="View history">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    History
                   </button>
                   <button class="btn btn--ghost btn--sm" onclick="document.getElementById('h-input').value='';document.getElementById('h-input').dispatchEvent(new Event('input'));document.getElementById('h-file-name').textContent='';" aria-label="Clear input">
                     Clear
@@ -508,8 +528,27 @@
   <!-- Toast Container -->
   <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
 
-  <!-- DOCX Export Library -->
+  <!-- ═══════════════════════════════════════
+       HISTORY SLIDE-OUT DRAWER
+  ═══════════════════════════════════════ -->
+  <div class="history-drawer-overlay" id="history-overlay"></div>
+  <aside class="history-drawer" id="history-drawer" aria-label="Humanization History">
+    <div class="history-header">
+      <h2>Recent Results</h2>
+      <button class="modal-close" id="history-close" aria-label="Close history">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="history-content" id="history-content">
+      <!-- History items injected here -->
+      <p class="history-empty">No history found. Try humanizing some text first!</p>
+    </div>
+  </aside>
+
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
   <script src="script.js"></script>
 </body>
 </html>

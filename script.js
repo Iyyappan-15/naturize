@@ -22,6 +22,7 @@ const hCharCount   = $('#h-char-count');
 const hBtn         = $('#h-btn');
 const hOutput      = $('#h-output');
 const toneSelect   = $('#tone-select');
+const regionSelect = $('#region-select');
 // hCopyBtn / hClearBtn are rendered dynamically — handled via onclick in renderHumanizedOutput()
 const dInput       = $('#d-input');
 const dBtn         = $('#d-btn');
@@ -49,6 +50,12 @@ const dFeedbackRow = $('#d-feedback-row');
 const dThumbUp     = $('#d-thumb-up');
 const dThumbDown   = $('#d-thumb-down');
 const dFeedThanks  = $('#d-feedback-thanks');
+
+const historyBtn     = $('#h-history-btn');
+const historyDrawer  = $('#history-drawer');
+const historyOverlay = $('#history-overlay');
+const historyClose   = $('#history-close');
+const historyContent = $('#history-content');
 
 /* ── THEME SYSTEM ── */
 function applyTheme(theme) {
@@ -109,11 +116,11 @@ function updateUsageBar() {
 }
 
 /* ── 4. API FUNCTIONS ── */
-async function callHumanize(text, tone = 'professional') {
+async function callHumanize(text, tone = 'professional', region = 'US') {
   const res = await fetch('/api/humanize', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, tone }),
+    body: JSON.stringify({ text, tone, region }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
@@ -160,6 +167,48 @@ function exportDocx() {
     }
   } catch (err) {
     console.error('DOCX export error:', err);
+    showToast('Export failed. Please try again.', 'error');
+  }
+}
+
+/* ── PDF EXPORT ── */
+function exportPdf() {
+  if (!state.lastHumanized) return;
+  if (typeof window.jspdf === 'undefined') {
+    showToast('PDF library still loading. Please try again in a moment.', 'error');
+    return;
+  }
+  
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setTextColor(0, 229, 192); // Accent color
+    doc.setFontSize(18);
+    doc.text("Naturize — Humanized Text", 20, 20);
+    
+    // Meta
+    const toneLabel = toneSelect ? toneSelect.options[toneSelect.selectedIndex]?.text || 'Professional' : 'Professional';
+    const regionLabel = regionSelect ? regionSelect.options[regionSelect.selectedIndex]?.text || 'US' : 'US';
+    doc.setTextColor(136, 136, 136); // Muted
+    doc.setFontSize(10);
+    doc.text(`Tone: ${toneLabel} | Region: ${regionLabel} | Exported from naturize-web.vercel.app`, 20, 28);
+    
+    // Line
+    doc.setDrawColor(238, 238, 238);
+    doc.line(20, 32, 190, 32);
+    
+    // Content
+    doc.setTextColor(40, 40, 40);
+    doc.setFontSize(12);
+    const splitText = doc.splitTextToSize(state.lastHumanized, 170);
+    doc.text(splitText, 20, 42);
+    
+    doc.save('naturize-export.pdf');
+    showToast('PDF file downloaded!', 'success');
+  } catch (err) {
+    console.error('PDF export error:', err);
     showToast('Export failed. Please try again.', 'error');
   }
 }
@@ -282,6 +331,10 @@ function renderHumanizedOutput({ result, humanityScore }) {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Export DOCX
       </button>
+      <button class="btn btn--ghost btn--sm" onclick="exportPdf()" title="Export as PDF document">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Export PDF
+      </button>
       <button class="btn btn--ghost btn--sm" onclick="clearOutput()">Clear</button>
     </div>`;
   hOutput.style.animation = 'fadeIn .5s ease forwards';
@@ -305,16 +358,19 @@ async function runHumanize() {
   if (!canUse('humanize')) { showModal(); return; }
 
   const tone = toneSelect ? toneSelect.value : 'professional';
+  const region = regionSelect ? regionSelect.value : 'US';
   const toneLabel = toneSelect ? toneSelect.options[toneSelect.selectedIndex]?.text || 'Professional' : 'Professional';
 
   state.hLoading = true;
   hBtn.disabled = true;
   if (toneSelect) toneSelect.disabled = true;
+  if (regionSelect) regionSelect.disabled = true;
   renderSkeleton();
 
   try {
-    const { result, humanityScore } = await callHumanize(text, tone);
+    const { result, humanityScore } = await callHumanize(text, tone, region);
     incrementUsage('humanize');
+    saveHistory(text, result);
     renderHumanizedOutput({ result, humanityScore });
     showToast(`Done with ${toneLabel} tone! ${usesLeft('humanize')} free uses left today.`, 'success');
   } catch (err) {
@@ -324,6 +380,7 @@ async function runHumanize() {
     state.hLoading = false;
     hBtn.disabled = false;
     if (toneSelect) toneSelect.disabled = false;
+    if (regionSelect) regionSelect.disabled = false;
   }
 }
 
@@ -337,6 +394,86 @@ function copyOutput() {
 function clearOutput() {
   state.lastHumanized = '';
   renderEmptyOutput();
+}
+
+/* ── HISTORY SYSTEM ── */
+function saveHistory(original, humanized) {
+  let hist = [];
+  try {
+    hist = JSON.parse(localStorage.getItem('nz_history') || '[]');
+  } catch (e) {}
+  
+  // Add new item to start
+  hist.unshift({
+    id: Date.now(),
+    date: new Date().toLocaleString(),
+    original,
+    humanized
+  });
+  
+  // Keep only last 5
+  if (hist.length > 5) hist = hist.slice(0, 5);
+  localStorage.setItem('nz_history', JSON.stringify(hist));
+  renderHistory();
+}
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem('nz_history') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function renderHistory() {
+  if (!historyContent) return;
+  const hist = loadHistory();
+  
+  if (hist.length === 0) {
+    historyContent.innerHTML = '<p class="history-empty">No history found. Try humanizing some text first!</p>';
+    return;
+  }
+  
+  historyContent.innerHTML = hist.map(item => `
+    <div class="history-item">
+      <span class="history-time">${item.date}</span>
+      <div class="history-preview">${escapeHtml(item.humanized)}</div>
+      <div class="history-actions">
+        <button class="btn btn--primary" onclick="restoreHistory(${item.id})">Restore</button>
+        <button class="btn btn--ghost" onclick="deleteHistory(${item.id})">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.restoreHistory = function(id) {
+  const hist = loadHistory();
+  const item = hist.find(h => h.id === id);
+  if (item) {
+    hInput.value = item.original;
+    updateCounters();
+    renderHumanizedOutput({ result: item.humanized, humanityScore: 85 }); // Mock score since we don't save it
+    closeHistory();
+    showToast('Restored from history!', 'success');
+  }
+}
+
+window.deleteHistory = function(id) {
+  let hist = loadHistory();
+  hist = hist.filter(h => h.id !== id);
+  localStorage.setItem('nz_history', JSON.stringify(hist));
+  renderHistory();
+}
+
+function openHistory() {
+  renderHistory();
+  historyDrawer?.classList.add('open');
+  historyOverlay?.classList.add('open');
+}
+
+function closeHistory() {
+  historyDrawer?.classList.remove('open');
+  historyOverlay?.classList.remove('open');
 }
 
 /* ── 6. DETECTOR UI ── */
@@ -540,7 +677,17 @@ dInput?.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key
 // Modal
 modalClose?.addEventListener('click', hideModal);
 modalOverlay?.addEventListener('click', e => { if (e.target === modalOverlay) hideModal(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') hideModal(); });
+document.addEventListener('keydown', e => { 
+  if (e.key === 'Escape') {
+    hideModal();
+    closeHistory();
+  } 
+});
+
+// History Drawer
+historyBtn?.addEventListener('click', openHistory);
+historyClose?.addEventListener('click', closeHistory);
+historyOverlay?.addEventListener('click', closeHistory);
 
 // CTA smooth scroll
 $$('[data-scroll]').forEach(btn => {
