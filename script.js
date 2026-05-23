@@ -131,15 +131,15 @@ async function callHumanize(text, tone = 'professional', region = 'US') {
 function exportDocx() {
   if (!state.lastHumanized) return;
   try {
-    // Build a simple HTML document for Word
     const toneLabel = toneSelect ? toneSelect.options[toneSelect.selectedIndex]?.text || 'Professional' : 'Professional';
+    const regionLabel = regionSelect ? regionSelect.options[regionSelect.selectedIndex]?.text || 'American' : 'American';
     const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head><meta charset="UTF-8"><title>Naturize Export</title></head>
         <body style="font-family: Calibri, Arial, sans-serif; font-size: 12pt; line-height: 1.6; margin: 2cm;">
-          <h2 style="color: #00c9a7; font-size: 16pt;">Naturize — Humanized Text</h2>
-          <p style="color: #888; font-size: 10pt; margin-bottom: 20px;">Tone: ${escapeHtml(toneLabel)} &bull; Exported from naturize-web.vercel.app</p>
+          <h2 style="color: #00c9a7; font-size: 16pt;">Naturize - Humanized Text</h2>
+          <p style="color: #888; font-size: 10pt; margin-bottom: 20px;">Tone: ${escapeHtml(toneLabel)} | Region: ${escapeHtml(regionLabel)} | Exported from naturize.iyyappan.me</p>
           <hr style="border: none; border-top: 1px solid #eee; margin-bottom: 20px;" />
           <p style="font-size: 12pt; line-height: 1.8;">${escapeHtml(state.lastHumanized).replace(/\n/g, '<br/>')}</p>
         </body>
@@ -155,7 +155,6 @@ function exportDocx() {
       URL.revokeObjectURL(url);
       showToast('DOCX file downloaded!', 'success');
     } else {
-      // Fallback: download as plain .txt if library fails
       const blob = new Blob([state.lastHumanized], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -178,35 +177,95 @@ function exportPdf() {
     showToast('PDF library still loading. Please try again in a moment.', 'error');
     return;
   }
-  
+
   try {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    // Header
-    doc.setTextColor(0, 229, 192); // Accent color
-    doc.setFontSize(18);
-    doc.text("Naturize — Humanized Text", 20, 20);
-    
-    // Meta
-    const toneLabel = toneSelect ? toneSelect.options[toneSelect.selectedIndex]?.text || 'Professional' : 'Professional';
-    const regionLabel = regionSelect ? regionSelect.options[regionSelect.selectedIndex]?.text || 'US' : 'US';
-    doc.setTextColor(136, 136, 136); // Muted
-    doc.setFontSize(10);
-    doc.text(`Tone: ${toneLabel} | Region: ${regionLabel} | Exported from naturize-web.vercel.app`, 20, 28);
-    
-    // Line
-    doc.setDrawColor(238, 238, 238);
-    doc.line(20, 32, 190, 32);
-    
-    // Content
-    doc.setTextColor(40, 40, 40);
-    doc.setFontSize(12);
-    const splitText = doc.splitTextToSize(state.lastHumanized, 170);
-    doc.text(splitText, 20, 42);
-    
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+    const pageW  = doc.internal.pageSize.getWidth();
+    const pageH  = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const usableW = pageW - margin * 2;
+
+    // ── Safe ASCII labels (avoid encoding issues with special chars) ──
+    const toneRaw   = toneSelect   ? toneSelect.options[toneSelect.selectedIndex]?.text   || 'Professional' : 'Professional';
+    const regionRaw = regionSelect ? regionSelect.options[regionSelect.selectedIndex]?.text || 'American'    : 'American';
+    // Strip any emoji/special chars for PDF safety
+    const toneLabel   = toneRaw.replace(/[^\x20-\x7E]/g, '').trim();
+    const regionLabel = regionRaw.replace(/[^\x20-\x7E]/g, '').trim();
+
+    // ── HEADER ──
+    doc.setFillColor(18, 18, 28);
+    doc.rect(0, 0, pageW, 40, 'F');
+
+    doc.setTextColor(0, 201, 167);  // accent teal
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Naturize - Humanized Text', margin, 17);
+
+    doc.setTextColor(180, 180, 180);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const metaLine = `Tone: ${toneLabel}  |  Region: ${regionLabel}  |  naturize.iyyappan.me`;
+    doc.text(metaLine, margin, 27);
+
+    // Separator line
+    doc.setDrawColor(0, 201, 167);
+    doc.setLineWidth(0.4);
+    doc.line(margin, 35, pageW - margin, 35);
+
+    // ── BODY TEXT with automatic page breaks ──
+    doc.setTextColor(30, 30, 30);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+
+    // Sanitize text: replace non-latin-1 characters to avoid encoding corruption
+    const safeText = state.lastHumanized
+      .replace(/\u2014/g, '-')   // em dash -> hyphen
+      .replace(/\u2013/g, '-')   // en dash -> hyphen
+      .replace(/\u2018|\u2019/g, "'")  // smart single quotes
+      .replace(/\u201C|\u201D/g, '"')  // smart double quotes
+      .replace(/\u2026/g, '...')       // ellipsis
+      .replace(/[^\x09\x0A\x0D\x20-\x7E\xA0-\xFF]/g, ''); // drop other non-latin1
+
+    const lineHeight = 6;
+    const lines = doc.splitTextToSize(safeText, usableW);
+    let cursorY = 48;
+
+    lines.forEach((line) => {
+      if (cursorY + lineHeight > pageH - margin) {
+        doc.addPage();
+        // Repeat a small header on continuation pages
+        doc.setFillColor(18, 18, 28);
+        doc.rect(0, 0, pageW, 14, 'F');
+        doc.setTextColor(0, 201, 167);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Naturize - Humanized Text (cont.)', margin, 9);
+        doc.setDrawColor(0, 201, 167);
+        doc.setLineWidth(0.3);
+        doc.line(margin, 12, pageW - margin, 12);
+
+        doc.setTextColor(30, 30, 30);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        cursorY = 22;
+      }
+      doc.text(line, margin, cursorY);
+      cursorY += lineHeight;
+    });
+
+    // ── FOOTER on every page ──
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setTextColor(160, 160, 160);
+      doc.setFontSize(8);
+      doc.text(`Page ${p} of ${totalPages}  |  naturize.iyyappan.me`, margin, pageH - 8);
+    }
+
     doc.save('naturize-export.pdf');
-    showToast('PDF file downloaded!', 'success');
+    showToast('PDF downloaded successfully!', 'success');
   } catch (err) {
     console.error('PDF export error:', err);
     showToast('Export failed. Please try again.', 'error');
