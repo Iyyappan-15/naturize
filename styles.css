@@ -746,3 +746,49 @@ html.light .tone-select option { background: #fff; }
   height: auto;
   min-height: 28px;
 }
+
+/* ── Export Dropdown ── */
+.export-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.export-menu {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 168px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  z-index: 200;
+  overflow: hidden;
+  animation: fadeIn 0.15s ease;
+}
+.export-menu.open {
+  display: flex;
+}
+.export-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 15px;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+  width: 100%;
+}
+.export-menu-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+.export-menu-item svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}

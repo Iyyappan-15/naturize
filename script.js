@@ -213,6 +213,24 @@ function exportPdf() {
   }
 }
 
+/* ── EXPORT MENU TOGGLE ── */
+function toggleExportMenu() {
+  const menu = document.getElementById('export-menu');
+  if (!menu) return;
+  menu.classList.toggle('open');
+}
+
+function closeExportMenu() {
+  const menu = document.getElementById('export-menu');
+  if (menu) menu.classList.remove('open');
+}
+
+// Close export menu on outside click
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('export-wrap');
+  if (wrap && !wrap.contains(e.target)) closeExportMenu();
+});
+
 async function callDetect(text) {
   const res = await fetch('/api/detect', {
     method: 'POST',
@@ -327,14 +345,23 @@ function renderHumanizedOutput({ result, humanityScore }) {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         Copy
       </button>
-      <button class="btn--docx" onclick="exportDocx()" title="Export as Word document">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        Export DOCX
-      </button>
-      <button class="btn btn--ghost btn--sm" onclick="exportPdf()" title="Export as PDF document">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        Export PDF
-      </button>
+      <div class="export-wrap" id="export-wrap">
+        <button class="btn--docx" onclick="toggleExportMenu()" id="export-main-btn" title="Export document">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Export
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:2px"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="export-menu" id="export-menu">
+          <button class="export-menu-item" onclick="exportDocx(); closeExportMenu()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Export as DOCX
+          </button>
+          <button class="export-menu-item" onclick="exportPdf(); closeExportMenu()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Export as PDF
+          </button>
+        </div>
+      </div>
       <button class="btn btn--ghost btn--sm" onclick="clearOutput()">Clear</button>
     </div>`;
   hOutput.style.animation = 'fadeIn .5s ease forwards';
@@ -742,11 +769,10 @@ function setupFeedback(upBtn, downBtn, thanksEl) {
 setupFeedback(hThumbUp, hThumbDown, hFeedThanks);
 setupFeedback(dThumbUp, dThumbDown, dFeedThanks);
 
-// Add missing observer on API calls
+// Usage bar wrapper — callHumanize wraps to sync UI ONLY (no incrementUsage here — runHumanize does it)
 const originalCallHumanize = callHumanize;
 callHumanize = async function() {
   const r = await originalCallHumanize.apply(this, arguments);
-  incrementUsage('humanize');
   updateUsageBar();
   if (hFeedbackRow) hFeedbackRow.style.display = 'flex';
   if (hFeedThanks) hFeedThanks.style.display = 'none';
@@ -755,10 +781,10 @@ callHumanize = async function() {
   return r;
 }
 
+// Usage bar wrapper — callDetect wraps to sync UI ONLY (no incrementUsage here — runDetect does it)
 const originalCallDetect = callDetect;
 callDetect = async function() {
   const r = await originalCallDetect.apply(this, arguments);
-  incrementUsage('detect');
   updateUsageBar();
   if (dFeedbackRow) dFeedbackRow.style.display = 'flex';
   if (dFeedThanks) dFeedThanks.style.display = 'none';
