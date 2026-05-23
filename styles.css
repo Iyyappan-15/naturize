@@ -505,3 +505,138 @@ html.light .tone-select option { background: #fff; }
   width: 22px;
   height: 22px;
 }
+
+/* ═══════════════════════════════════════
+   NEW FEATURES CSS (Usage, File, Feedback)
+   ═══════════════════════════════════════ */
+
+/* Usage Bar */
+.usage-bar-wrap {
+  margin-bottom: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+.usage-bar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.usage-bar-label {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.usage-bar-counts {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.usage-track {
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.usage-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.usage-fill--humanize { background: var(--accent); }
+.usage-fill--detect { background: var(--danger); }
+.usage-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  align-items: center;
+}
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.legend-dot--h { background: var(--accent); }
+.legend-dot--d { background: var(--danger); }
+
+/* File Upload */
+.file-upload-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.file-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--surface2);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: var(--transition);
+}
+.file-upload-btn:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.2);
+}
+.file-name-label {
+  font-size: 0.85rem;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* Feedback Row */
+.feedback-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.feedback-label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.feedback-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--surface2);
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  transition: var(--transition);
+}
+.feedback-btn:hover {
+  background: rgba(255,255,255,0.05);
+}
+.feedback-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.feedback-thanks {
+  font-size: 0.85rem;
+  color: var(--accent);
+  margin-left: auto;
+  animation: fadeIn 0.3s ease;
+}

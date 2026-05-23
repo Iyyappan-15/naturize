@@ -31,6 +31,25 @@ const modalClose   = $('#modal-close');
 const toastContainer = $('#toast-container');
 const themeToggleBtn = $('#theme-toggle');
 
+/* New Elements */
+const usageCounts  = $('#usage-bar-counts');
+const usageFillH   = $('#usage-fill-h');
+const usageFillD   = $('#usage-fill-d');
+const hFileInput   = $('#h-file-input');
+const hFileName    = $('#h-file-name');
+const dFileInput   = $('#d-file-input');
+const dFileName    = $('#d-file-name');
+
+const hFeedbackRow = $('#h-feedback-row');
+const hThumbUp     = $('#h-thumb-up');
+const hThumbDown   = $('#h-thumb-down');
+const hFeedThanks  = $('#h-feedback-thanks');
+
+const dFeedbackRow = $('#d-feedback-row');
+const dThumbUp     = $('#d-thumb-up');
+const dThumbDown   = $('#d-thumb-down');
+const dFeedThanks  = $('#d-feedback-thanks');
+
 /* ── THEME SYSTEM ── */
 function applyTheme(theme) {
   document.documentElement.classList.toggle('light', theme === 'light');
@@ -75,6 +94,18 @@ function canUse(type) {
 
 function usesLeft(type) {
   return Math.max(0, DAILY_LIMIT - getUsage(type).count);
+}
+
+function updateUsageBar() {
+  if (!usageCounts) return;
+  const hUsed = getUsage('humanize').count;
+  const dUsed = getUsage('detect').count;
+  const hPct = Math.min(100, (hUsed / DAILY_LIMIT) * 100);
+  const dPct = Math.min(100, (dUsed / DAILY_LIMIT) * 100);
+  
+  usageCounts.textContent = `H: ${hUsed}/${DAILY_LIMIT} | D: ${dUsed}/${DAILY_LIMIT}`;
+  usageFillH.style.width = `${hPct}%`;
+  usageFillD.style.width = `${dPct}%`;
 }
 
 /* ── 4. API FUNCTIONS ── */
@@ -526,6 +557,79 @@ themeToggleBtn?.addEventListener('click', () => {
   showToast(isLight ? 'Dark mode on' : 'Light mode on', 'success');
 });
 
+// File Uploads
+function handleFileUpload(e, inputEl, nameEl) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 50 * 1024) { showToast('File too large (max 50KB)', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    inputEl.value = ev.target.result;
+    inputEl.dispatchEvent(new Event('input'));
+    nameEl.textContent = file.name;
+    showToast(`Loaded ${file.name}`, 'success');
+  };
+  reader.readAsText(file);
+}
+hFileInput?.addEventListener('change', e => handleFileUpload(e, hInput, hFileName));
+dFileInput?.addEventListener('change', e => {
+  handleFileUpload(e, dInput, dFileName);
+  setTimeout(() => {
+    const val = dInput.value;
+    $('#d-char-count').textContent = val.length;
+  }, 100);
+});
+
+// Feedback Listeners
+function setupFeedback(upBtn, downBtn, thanksEl) {
+  const handler = (e) => {
+    upBtn.classList.remove('active');
+    downBtn.classList.remove('active');
+    e.currentTarget.classList.add('active');
+    thanksEl.style.display = 'inline';
+    showToast('Feedback submitted!', 'success');
+  };
+  upBtn?.addEventListener('click', handler);
+  downBtn?.addEventListener('click', handler);
+}
+setupFeedback(hThumbUp, hThumbDown, hFeedThanks);
+setupFeedback(dThumbUp, dThumbDown, dFeedThanks);
+
+// Add missing observer on API calls
+const originalCallHumanize = callHumanize;
+callHumanize = async function() {
+  const r = await originalCallHumanize.apply(this, arguments);
+  incrementUsage('humanize');
+  updateUsageBar();
+  if (hFeedbackRow) hFeedbackRow.style.display = 'flex';
+  if (hFeedThanks) hFeedThanks.style.display = 'none';
+  if (hThumbUp) hThumbUp.classList.remove('active');
+  if (hThumbDown) hThumbDown.classList.remove('active');
+  return r;
+}
+
+const originalCallDetect = callDetect;
+callDetect = async function() {
+  const r = await originalCallDetect.apply(this, arguments);
+  incrementUsage('detect');
+  updateUsageBar();
+  if (dFeedbackRow) dFeedbackRow.style.display = 'flex';
+  if (dFeedThanks) dFeedThanks.style.display = 'none';
+  if (dThumbUp) dThumbUp.classList.remove('active');
+  if (dThumbDown) dThumbDown.classList.remove('active');
+  return r;
+}
+
+// Clear handlers to hide feedback
+const hClear = () => { if (hFeedbackRow) hFeedbackRow.style.display = 'none'; };
+const dClear = () => { if (dFeedbackRow) dFeedbackRow.style.display = 'none'; };
+$('#h-input')?.addEventListener('input', (e) => { if (e.target.value === '') hClear(); });
+$('#d-input')?.addEventListener('input', (e) => {
+  const val = e.target.value;
+  $('#d-char-count').textContent = val.length;
+  if (val === '') dClear();
+});
+
 // Init
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
@@ -533,5 +637,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollReveal();
   renderEmptyOutput();
   updateCounters();
+  updateUsageBar();
   switchTab('humanize');
 });
