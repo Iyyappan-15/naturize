@@ -1,4 +1,4 @@
-// /api/detect.js — Naturize AI Detector v5 (Advanced Authorship Analysis System)
+// /api/detect.js — Naturize AI Detector (Advanced Authorship Analysis System)
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -40,7 +40,9 @@ IMPORTANT RULES:
 ==================================================
 AI AUTHORSHIP INDICATORS
 ========================
+
 Analyze for:
+
 1. Repetition Patterns
 * Repeated sentence structures
 * Repeated transitions
@@ -76,6 +78,7 @@ Analyze for:
 ==================================================
 HUMAN AUTHORSHIP INDICATORS
 ===========================
+
 Actively search for evidence that the text may be human-written.
 
 Strong Human Signals:
@@ -109,6 +112,7 @@ Human signals must be considered equally with AI signals.
 ==================================================
 PUNCTUATION ANALYSIS
 ====================
+
 Analyze:
 * Comma usage
 * Dash usage
@@ -116,14 +120,10 @@ Analyze:
 * List formatting
 * Repeated punctuation patterns
 
-IMPORTANT:
-A comma followed by "and" is NOT evidence of AI by itself.
-Example: "I finished my work, and then I left."
-This pattern occurs naturally in human writing. Treat punctuation patterns only as supporting evidence.
-
 ==================================================
 TEXT METRICS EVALUATION
 =======================
+
 Analyze:
 * Word Count
 * Sentence Count
@@ -138,37 +138,59 @@ Analyze:
 * Transition Phrase Frequency
 
 Metric Interpretation:
-Potential AI Indicators: Very low sentence variance, Very high consistency, High repetition, Low specificity, Predictable structure
-Potential Human Indicators: Higher sentence variance, Specific details, Context-rich examples, Personal references, Natural stylistic irregularities
+
+Potential AI Indicators:
+* Very low sentence variance
+* Very high consistency
+* High repetition
+* Low specificity
+* Predictable structure
+
+Potential Human Indicators:
+* Higher sentence variance
+* Specific details
+* Context-rich examples
+* Personal references
+* Natural stylistic irregularities
 
 ==================================================
 DECISION FRAMEWORK
 ==================
-Step 1: Calculate AI Evidence Score (0-100)
-Step 2: Calculate Human Evidence Score (0-100)
-Step 3: Compare both scores.
+
+Step 1:
+Calculate AI Evidence Score (0-100)
+
+Step 2:
+Calculate Human Evidence Score (0-100)
+
+Step 3:
+Compare both scores.
 
 Classification Rules:
-* AI: AI Evidence Score is significantly higher than Human Evidence Score.
-* Human: Human Evidence Score is significantly higher than AI Evidence Score.
-* Uncertain: Evidence is mixed, weak, or insufficient.
+* AI:
+  AI Evidence Score is significantly higher than Human Evidence Score.
+* Human:
+  Human Evidence Score is significantly higher than AI Evidence Score.
+* Uncertain:
+  Evidence is mixed, weak, or insufficient.
 
-==================================================
-TEXT TO ANALYZE:
-"""
-${sanitized.slice(0, 5000)}
-"""
 ==================================================
 OUTPUT FORMAT
 =============
+
 Return ONLY valid JSON.
+
 {
 "classification": "AI" | "Human" | "Uncertain",
 "confidence": 0,
 "ai_score": 0,
 "human_score": 0,
-"ai_signals": [""],
-"human_signals": [""],
+"ai_signals": [
+""
+],
+"human_signals": [
+""
+],
 "metrics_analysis": {
 "word_count": 0,
 "sentence_count": 0,
@@ -179,68 +201,43 @@ Return ONLY valid JSON.
 "readability_score": 0
 },
 "reasoning": ""
-}`;
+}
+
+TEXT TO ANALYZE:
+"""
+${sanitized.slice(0, 5000)}
+"""`;
 
   try {
     const apiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": \`Bearer \${groqKey.trim()}\`
+        "Authorization": `Bearer ${groqKey.trim()}`
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
         messages: [{ role: "user", content: classifyPrompt }],
         temperature: 0.1,
-        max_tokens: 1500,
+        max_tokens: 1024,
         response_format: { type: "json_object" }
       })
     });
 
-    if (apiRes.ok) {
-      const data = await apiRes.json();
-      const raw = data?.choices?.[0]?.message?.content || "";
-      try {
-        let cleaned = raw.trim().replace(/^```(?:json)?\\s*/i, "").replace(/\\s*```$/, "");
-        const parsed = JSON.parse(cleaned);
-
-        // Map the new format back to the frontend's expected { score, verdict, reasons } format
-        // so we don't break the UI, while still executing the requested LLM logic.
-        
-        let finalScore = parsed.ai_score || 0;
-        let finalVerdict = "Mixed";
-        if (parsed.classification === "AI") {
-            finalVerdict = finalScore >= 80 ? "AI-Generated" : "Likely AI";
-        } else if (parsed.classification === "Human") {
-            finalVerdict = finalScore <= 20 ? "Human" : "Likely Human";
-            // ensure the ai_score shown on the meter is low if it's human
-            if (finalScore > 40) finalScore = Math.max(0, 100 - (parsed.human_score || 80));
-        } else {
-            finalVerdict = "Mixed";
-            finalScore = 50;
-        }
-
-        const reasons = [
-            ...((parsed.ai_signals || []).map(s => \`🔴 \${s}\`)),
-            ...((parsed.human_signals || []).map(s => \`🟢 \${s}\`))
-        ].filter(r => r.length > 5);
-
-        return res.status(200).json({ 
-            score: finalScore, 
-            verdict: finalVerdict, 
-            reasons: reasons,
-            raw_analysis: parsed // Include the full parsed JSON in case the frontend wants to use it later
-        });
-
-      } catch (e) { 
-        return res.status(500).json({ error: "Failed to parse AI response" });
-      }
-    } else {
-        const errorData = await apiRes.text();
-        return res.status(apiRes.status).json({ error: "Detection API error: " + errorData });
+    if (!apiRes.ok) {
+      throw new Error("API responded with an error");
     }
+
+    const data = await apiRes.json();
+    const raw = data?.choices?.[0]?.message?.content || "";
+    
+    let cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    const parsed = JSON.parse(cleaned);
+
+    return res.status(200).json(parsed);
+
   } catch (err) {
     console.error("LLM classify error:", err);
-    return res.status(500).json({ error: "Internal server error during detection." });
+    return res.status(500).json({ error: "Failed to analyze text." });
   }
 }

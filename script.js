@@ -595,15 +595,37 @@ function renderDetectorSkeleton() {
     </div>`;
 }
 
-function renderDetectorResult({ score, verdict, reasons }) {
-  const color = getScoreColor(score);
+function renderDetectorResult(result) {
+  // result = { classification, confidence, ai_score, human_score, ai_signals, human_signals, metrics_analysis, reasoning }
+  
+  const isHuman = result.classification === 'Human';
+  const isAI = result.classification === 'AI';
+  
+  let score, verdict, vClass, color;
+  
+  if (isAI) {
+    score = result.ai_score;
+    verdict = 'AI-Generated';
+    vClass = 'ai';
+    color = 'var(--ai)';
+  } else if (isHuman) {
+    score = result.human_score;
+    verdict = 'Human';
+    vClass = 'human';
+    color = 'var(--human)';
+  } else {
+    score = result.confidence; // or maybe average, or just ai_score
+    verdict = 'Mixed / Uncertain';
+    vClass = 'mixed';
+    color = 'var(--mixed)';
+  }
+
   const circumference = 408;
   const offset = circumference - (score / 100) * circumference;
-  const vClass = getVerdictClass(verdict);
 
   dResult.innerHTML = `
     <div class="detector-result">
-      <div class="meter-wrap" role="img" aria-label="${score}% AI probability">
+      <div class="meter-wrap" role="img" aria-label="${score}% Confidence">
         <svg width="160" height="160" viewBox="0 0 160 160">
           <circle class="meter-track" cx="80" cy="80" r="65"/>
           <circle class="meter-fill" id="meter-fill" cx="80" cy="80" r="65"
@@ -611,17 +633,42 @@ function renderDetectorResult({ score, verdict, reasons }) {
         </svg>
         <div class="meter-label">
           <span class="meter-score" id="meter-score" style="color:${color}">0</span>
-          <span class="meter-unit">AI Score</span>
+          <span class="meter-unit">${isHuman ? 'Human Score' : 'AI Score'}</span>
         </div>
       </div>
       <span class="verdict-badge verdict-badge--${vClass}">${verdict}</span>
-      <ul class="reasons-list" aria-label="Detection reasons">
-        ${reasons.map((r, i) => `
-          <li class="reason-item" style="transition-delay:${(i+1)*0.12}s">
-            <span class="reason-dot" aria-hidden="true"></span>
-            <span>${escapeHtml(r)}</span>
-          </li>`).join('')}
-      </ul>
+      
+      <div class="analysis-section" style="margin-top: 20px; text-align: left; width: 100%;">
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px; text-align: center;">
+          ${escapeHtml(result.reasoning || '')}
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+          <div style="background: rgba(255, 68, 68, 0.05); border: 1px solid rgba(255, 68, 68, 0.2); padding: 12px; border-radius: 8px;">
+            <h4 style="color: var(--ai); font-size: 0.85rem; margin-bottom: 8px;">AI Signals</h4>
+            <ul style="padding-left: 20px; font-size: 0.8rem; color: var(--text-muted);">
+              ${(result.ai_signals || []).slice(0,3).map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+            </ul>
+          </div>
+          <div style="background: rgba(0, 201, 167, 0.05); border: 1px solid rgba(0, 201, 167, 0.2); padding: 12px; border-radius: 8px;">
+            <h4 style="color: var(--human); font-size: 0.85rem; margin-bottom: 8px;">Human Signals</h4>
+            <ul style="padding-left: 20px; font-size: 0.8rem; color: var(--text-muted);">
+              ${(result.human_signals || []).slice(0,3).map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+
+        <div style="background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: 8px;">
+          <h4 style="font-size: 0.85rem; margin-bottom: 8px;">Metrics Analysis</h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.75rem; color: var(--text-muted);">
+            ${Object.entries(result.metrics_analysis || {}).map(([k, v]) => `
+              <div style="background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 4px;">
+                <strong style="color: var(--text);">${k.replace(/_/g, ' ')}:</strong> ${v}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
     </div>`;
 
   // Animate meter
@@ -633,17 +680,12 @@ function renderDetectorResult({ score, verdict, reasons }) {
 
       // Count-up animation
       let current = 0;
-      const step = Math.ceil(score / 40);
+      const step = Math.ceil(score / 40) || 1;
       const interval = setInterval(() => {
         current = Math.min(current + step, score);
         if (scoreEl) scoreEl.textContent = current;
         if (current >= score) clearInterval(interval);
       }, 30);
-
-      // Reveal reasons
-      $$('.reason-item').forEach(el => {
-        setTimeout(() => el.classList.add('revealed'), 300);
-      });
     }, 80);
   });
 }
