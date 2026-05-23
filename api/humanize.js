@@ -178,14 +178,10 @@ The writing should feel:
     result = result.replace(/\bcannot\b/g, "can't");
     result = result.replace(/\bit is\b/g, "it's");
     
-    // Regex comma cleanups
-    result = result.replace(/,\s+and\b/g, " and"); // Remove comma before and
-    result = result.replace(/\band\s+,/g, "and "); // Remove comma after and
-    
     // SECONDARY QUALITY PASS (Llama-3.1-8b)
     const secondarySys = `You are a strict editor. Your job is to read the provided text and do ONLY three things:
 1. Simplify any overly complex or "corporate" words into simple, everyday 5th-grade vocabulary.
-2. Remove unnecessary commas that disrupt the flow.
+2. STRICTLY remove all Oxford commas. Never use a comma before "and" or "or" in a list.
 3. Ensure the text flows naturally like a real human wrote it.
 Output ONLY the final polished text, nothing else.`;
 
@@ -204,7 +200,7 @@ Output ONLY the final polished text, nothing else.`;
             { role: "system", content: secondarySys },
             { role: "user", content: secondaryUser }
           ],
-          temperature: 0.3,
+          temperature: 0.2, // lowered temperature for stricter formatting adherence
           max_tokens: 3000
         }),
       });
@@ -218,6 +214,16 @@ Output ONLY the final polished text, nothing else.`;
     } catch(e) {
       console.error("Secondary pass failed, using primary result.", e);
     }
+
+    // STRICT REGEX COMMA CLEANUP (Runs AFTER secondary pass to guarantee removal)
+    // Remove comma before 'and'
+    result = result.replace(/,\s+and\b/gi, " and");
+    // Remove comma after 'and'
+    result = result.replace(/\band\s+,/gi, "and ");
+    // Remove comma before 'or'
+    result = result.replace(/,\s+or\b/gi, " or");
+    // Remove comma after 'or'
+    result = result.replace(/\bor\s+,/gi, "or ");
 
     // Estimate score
     const humanityScore = estimateHumanityScore(result);
