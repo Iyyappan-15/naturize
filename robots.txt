@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://naturize.iyyappan.me/sitemap.xml

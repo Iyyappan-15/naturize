@@ -490,17 +490,30 @@
        FOOTER
   ═══════════════════════════════════════ -->
   <footer class="footer" role="contentinfo" style="justify-content: center; gap: 48px;">
-    <div style="display:flex;align-items:center;gap:8px;">
+  <div style="display:flex;align-items:center;gap:8px;">
       <img src="logo.png" alt="Naturize" width="26" height="26" style="border-radius:5px;object-fit:cover" />
       <span style="font-family:var(--font-head);font-weight:700;font-size:.95rem">Naturize</span>
     </div>
 
-    <nav class="footer-links" aria-label="Footer navigation">
-      <a href="privacy.html">Privacy</a>
-      <a href="terms.html">Terms</a>
-      <a href="contact.html">Contact</a>
-    </nav>
-
+    <footer class="footer">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; max-width: 800px; margin: 0 auto; text-align: center; margin-bottom: 2rem;">
+      <div>
+        <h4 style="color: var(--text); margin-bottom: 1rem; font-size: 0.9rem;">Naturize</h4>
+        <nav class="footer-nav" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="terms.html">Terms</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+      </div>
+      <div>
+        <h4 style="color: var(--text); margin-bottom: 1rem; font-size: 0.9rem;">Use Cases & Guides</h4>
+        <nav class="footer-nav" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+          <a href="blog/how-to-bypass-turnitin-ai-detector.html">How to bypass Turnitin (2026)</a>
+          <a href="blog/make-chatgpt-undetectable.html">Make ChatGPT Undetectable</a>
+          <a href="blog/ai-to-human-text-converter-seo.html">AI Text Converter for SEO</a>
+        </nav>
+      </div>
+    </div>
     <p class="footer-powered">© 2026 Naturize</p>
   </footer>
 
