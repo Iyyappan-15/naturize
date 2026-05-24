@@ -20,9 +20,18 @@ export default async function handler(req, res) {
   const input = text.trim().replace(/[<>]/g, "").slice(0, 5000);
 
   // ─── STEP 1: FAST STATISTICAL PRE-ANALYSIS ───────────────────────────────
-  const words = input.split(/\s+/);
-  const sentences = input.split(/[.!?]+/).filter(s => s.trim().length > 3);
+  const words = input.split(/\s+/).filter(w => w.trim().length > 0);
   const wordCount = words.length;
+
+  if (wordCount < 50) {
+    return res.status(400).json({
+      error: true,
+      message: "Please enter at least 50 words for accurate AI detection analysis.",
+      word_count: wordCount
+    });
+  }
+
+  const sentences = input.split(/[.!?]+/).filter(s => s.trim().length > 3);
   const sentenceCount = sentences.length;
   const avgSentenceLength = sentenceCount > 0 ? (wordCount / sentenceCount).toFixed(1) : 0;
 

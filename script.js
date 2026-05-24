@@ -297,7 +297,7 @@ async function callDetect(text) {
     body: JSON.stringify({ text }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Request failed');
+  if (!res.ok) throw new Error(data.message || data.error || 'Request failed');
   return data;
 }
 
@@ -701,6 +701,13 @@ async function runDetect() {
   const text = dInput.value.trim();
   if (!text) { showToast('Please paste some text first.', 'error'); return; }
   if (text.length > 10000) { showToast('Text too long. Max 10,000 characters.', 'error'); return; }
+  
+  const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+  if (wordCount < 50) {
+    showToast(`Please enter at least 50 words for accurate AI detection analysis. (Current: ${wordCount})`, 'error');
+    return;
+  }
+  
   if (!canUse('detect')) { showModal(); return; }
 
   state.dLoading = true;
