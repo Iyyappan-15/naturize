@@ -596,19 +596,19 @@ function renderDetectorSkeleton() {
 }
 
 function renderDetectorResult(result) {
-  const isHuman = result.classification === 'Human';
-  const isAI    = result.classification === 'AI';
+  const isHuman = result.classification === 'Human Written';
+  const isAI    = result.classification === 'AI Generated';
 
   let score, verdict, vClass, color, label;
 
   if (isAI) {
-    score   = Math.max(result.ai_score, result.confidence || 0);
+    score   = result.confidence || 0;
     verdict = '🤖 AI-Generated';
     vClass  = 'ai';
     color   = '#ff4444';
     label   = 'AI Score';
   } else if (isHuman) {
-    score   = Math.max(result.human_score, result.confidence || 0);
+    score   = result.confidence || 0;
     verdict = '✅ Human Written';
     vClass  = 'human';
     color   = '#00c9a7';

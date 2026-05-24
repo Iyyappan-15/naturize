@@ -92,74 +92,165 @@ export default async function handler(req, res) {
   if (wordCount < 80) statHumanHints.push("Short text — insufficient for high-confidence AI detection");
 
   // ─── STEP 2: LLM DEEP ANALYSIS ───────────────────────────────────────────
-  const prompt = `You are a forensic AI-text detection expert trained on millions of samples from ChatGPT, Gemini, Claude, and human writers. You must ACCURATELY classify whether the text below was written by an AI or a human.
+  const prompt = `You are an Advanced Authorship Analysis Engine.
 
-## STATISTICAL PRE-ANALYSIS (computed externally — treat as objective facts):
-- Word count: ${wordCount}
-- Sentence count: ${sentenceCount}
-- Average sentence length: ${avgSentenceLength} words
-- Sentence burstiness (variance): ${burstiness} ${burstiness < 8 ? "(LOW = AI-like)" : burstiness > 25 ? "(HIGH = Human-like)" : "(MODERATE)"}
-- Vocabulary diversity ratio: ${vocabDiversity}
-- AI cliché phrases detected: ${clicheHits.length} → [${clicheHits.slice(0,5).join(", ")}]
-- Transition phrase density: ${transitionDensity} per sentence ${transitionDensity > 0.3 ? "(HIGH = AI-like)" : ""}
-- Paragraph count: ${paragraphCount}
-${statAiHints.length ? `- Statistical AI indicators: ${statAiHints.join("; ")}` : ""}
-${statHumanHints.length ? `- Statistical human indicators: ${statHumanHints.join("; ")}` : ""}
+Your task is to determine whether the submitted text is more likely:
+* AI Generated
+* Human Written
+* Uncertain
 
-## STRONG AI WRITING INDICATORS — score heavily if present:
-1. Uses "delve", "tapestry", "nuanced", "pivotal", "furthermore", "moreover", "underscore", "leverage", "multifaceted", "shed light", "realm of"
-2. Formulaic structure: Introduction → numbered points or body paragraphs → conclusion
-3. Overly polished, zero grammar mistakes, no contractions, no informal language
-4. Every paragraph is roughly the same length (robotic uniformity)
-5. Passive voice overuse, excessive hedging ("it is important to note")
-6. Claims "comprehensive" coverage without specific personal knowledge
-7. Transitions feel mechanical: "Furthermore", "In addition", "On the other hand"
-8. No first-person opinions, no emotional language, no colloquialisms
-9. Uses em-dashes and commas in a characteristic AI pattern
-10. Ends with a generic "conclusion" or "summary" paragraph
+IMPORTANT PRINCIPLES
+* Evaluate both AI evidence and Human evidence equally.
+* Never classify based on a single signal.
+* Never assume AI because the text is well-written.
+* Never assume Human because the text contains mistakes.
+* Consider all signals together.
+* Be conservative when evidence is mixed.
+* Avoid overconfident classifications.
+* If evidence is insufficient, return "Uncertain".
 
-## STRONG HUMAN WRITING INDICATORS — score heavily if present:
-1. Specific personal anecdotes, emotions, or opinions ("I think", "honestly", "tbh")
-2. Informal contractions: don't, I've, it's, we're
-3. Irregular or imperfect grammar, run-on sentences, sentence fragments
-4. Natural topic drift — humans don't stay perfectly on-topic
-5. Cultural references, humor, sarcasm, slang
-6. High sentence length variance — very short and very long mixed together
-7. References to specific real people, places, dates, prices
-8. Typos, corrections, self-interruptions
+---
 
-## IMPORTANT CALIBRATION RULES:
-- ChatGPT/Gemini text will almost ALWAYS have cliché AI phrases, uniform structure, and zero informal language → classify as AI with HIGH confidence (80-95+)
-- If the text is purely factual with no personality, no errors, and perfect structure → strong AI signal
-- Do NOT classify as "Uncertain" just to be safe. Make a DECISIVE call based on evidence weight.
-- If AI signals clearly outweigh human signals → classify as "AI" (not "Uncertain")
-- Only use "Uncertain" when evidence is genuinely balanced with roughly equal weight on both sides
-- Short texts under 80 words may warrant "Uncertain" due to insufficient data
+## AI AUTHORSHIP ANALYSIS
+Analyze for:
+* Generic explanations
+* Predictable wording
+* Formulaic sentence patterns
+* Repetitive transitions
+* Repetitive vocabulary
+* Excessive consistency
+* Uniform tone
+* Overly structured paragraphs
+* Lack of specificity
+* Lack of personal context
+* Generic examples
+* Excessive optimization
+* Repeated explanatory style
+
+Strong AI Evidence:
+* Multiple generic paragraphs
+* Consistent predictable flow
+* No personal context
+* No unique observations
+* Repetitive structural patterns
+
+Moderate AI Evidence:
+* Generic wording
+* High consistency
+* Low specificity
+
+Weak AI Evidence:
+* Good grammar
+* Formal writing style
+* Professional tone
+
+Weak AI evidence alone should never determine classification.
+
+---
+
+## HUMAN AUTHORSHIP ANALYSIS
+Actively search for evidence of genuine human writing.
+
+Strong Human Evidence:
+* Personal experiences
+* First-hand observations
+* Unique opinions
+* Personal anecdotes
+* Context-specific details
+* Real-world examples
+* Self-corrections
+* Personal reflections
+* Specific situations
+
+Moderate Human Evidence:
+* Named entities
+* Dates and timelines
+* Emotional variation
+* Natural sentence variation
+* Informal language
+* Personal preferences
+
+Weak Human Evidence:
+* Minor grammar inconsistencies
+* Casual punctuation
+* Conversational phrases
+
+Weak Human evidence alone should never determine classification.
+
+---
+
+## PUNCTUATION ANALYSIS
+Analyze punctuation patterns only as supporting evidence.
+Examples:
+* Comma usage
+* Dash usage
+* Parentheses
+* List formatting
+
+IMPORTANT:
+A comma followed by "and" is NOT evidence of AI or Human authorship by itself.
+Do not classify based on punctuation patterns alone.
+
+---
+
+## TEXT METRICS ANALYSIS
+Evaluate the following text metrics as supporting evidence only (metrics must not override stronger contextual evidence):
+- Word Count: ${wordCount}
+- Sentence Count: ${sentenceCount}
+- Average Sentence Length: ${avgSentenceLength}
+- Sentence Length Variance (Burstiness): ${burstiness}
+- Vocabulary Diversity: ${vocabDiversity}
+- AI Cliché Phrases Detected: ${clicheHits.length} (${clicheHits.join(', ')})
+- Transition Density: ${transitionDensity}
+
+---
+
+## MIXED CONTENT ANALYSIS
+Some texts may contain characteristics of both AI and Human writing.
+Examples:
+* Human-edited AI text
+* AI-generated text with personal additions
+* Humanized AI text
+
+When strong evidence exists on both sides:
+Classification: "Uncertain"
+Do not force a Human or AI label when evidence is mixed.
+
+---
+
+## DECISION FRAMEWORK
+Analyze:
+1. AI Evidence
+2. Human Evidence
+3. Text Metrics
+4. Contextual Signals
+
+Determine which evidence is stronger overall.
+
+Possible Classifications:
+* AI Generated
+* Human Written
+* Uncertain
+
+Use "Uncertain" whenever evidence is balanced or insufficient.
+
+---
+
+## OUTPUT FORMAT
+Return ONLY valid JSON.
+{
+"classification": "AI Generated" | "Human Written" | "Uncertain",
+"confidence": <integer 0-100>,
+"word_count": ${wordCount},
+"ai_signals": [<list of strings>],
+"human_signals": [<list of strings>],
+"reasoning": "<string explanation>"
+}
 
 ## TEXT TO ANALYZE:
 """
 ${input}
-"""
-
-Return ONLY valid JSON, no markdown, no explanation:
-{
-  "classification": "AI" | "Human" | "Uncertain",
-  "confidence": <integer 0-100>,
-  "ai_score": <integer 0-100>,
-  "human_score": <integer 0-100>,
-  "ai_signals": [<up to 5 specific evidence strings>],
-  "human_signals": [<up to 5 specific evidence strings>],
-  "metrics_analysis": {
-    "word_count": ${wordCount},
-    "sentence_count": ${sentenceCount},
-    "avg_sentence_length": "${avgSentenceLength} words",
-    "burstiness_variance": ${burstiness},
-    "vocabulary_diversity": ${vocabDiversity},
-    "ai_cliche_phrases": ${clicheHits.length},
-    "transition_density": ${transitionDensity}
-  },
-  "reasoning": "<2-3 sentence decisive explanation of the verdict>"
-}`;
+"""`;
 
   try {
     const apiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -188,17 +279,6 @@ Return ONLY valid JSON, no markdown, no explanation:
     let cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
     const parsed = JSON.parse(cleaned);
 
-    // Sanity-check: if stats strongly indicate AI but LLM said uncertain, override
-    if (parsed.classification === "Uncertain" && clicheHits.length >= 5 && burstiness < 10) {
-      parsed.classification = "AI";
-      parsed.ai_score = Math.max(parsed.ai_score, 75);
-      parsed.confidence = Math.max(parsed.confidence, 75);
-      parsed.reasoning = `Statistical analysis detected ${clicheHits.length} AI cliché phrases and very low sentence variance (${burstiness}), strongly indicating AI authorship. ` + parsed.reasoning;
-    }
-
-    // Ensure scores are integers
-    parsed.ai_score = Math.round(parsed.ai_score || 0);
-    parsed.human_score = Math.round(parsed.human_score || 0);
     parsed.confidence = Math.round(parsed.confidence || 50);
 
     return res.status(200).json(parsed);
