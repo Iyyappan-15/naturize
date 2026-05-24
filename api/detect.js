@@ -100,14 +100,12 @@ Your task is to determine whether the submitted text is more likely:
 * Uncertain
 
 IMPORTANT PRINCIPLES
-* Evaluate both AI evidence and Human evidence equally.
-* Never classify based on a single signal.
-* Never assume AI because the text is well-written.
-* Never assume Human because the text contains mistakes.
-* Consider all signals together.
-* Be conservative when evidence is mixed.
-* Avoid overconfident classifications.
-* If evidence is insufficient, return "Uncertain".
+* Make a confident, decisive assessment based on the available evidence.
+* Do not default to "Uncertain" just to play it safe.
+* Evaluate both AI evidence and Human evidence objectively.
+* Consider all signals together, giving highest weight to structural patterns, generic phrasing, and variance.
+* Never assume AI just because the text is grammatically correct.
+* Never assume Human just because the text contains minor typos.
 
 ---
 
@@ -212,9 +210,7 @@ Examples:
 * AI-generated text with personal additions
 * Humanized AI text
 
-When strong evidence exists on both sides:
-Classification: "Uncertain"
-Do not force a Human or AI label when evidence is mixed.
+When analyzing mixed content, weigh the evidence carefully. If AI structural patterns, clichés, and low variance are present throughout the core of the text, the underlying source is likely AI.
 
 ---
 
@@ -225,14 +221,19 @@ Analyze:
 3. Text Metrics
 4. Contextual Signals
 
+CRITICAL ACCURACY RULES:
+* Make a DECISIVE classification. Do not default to "Uncertain" just to play it safe.
+* If the text contains known AI clichés (e.g., "delve", "tapestry", "crucial role") and lacks genuine personal anecdotes, it MUST be classified as "AI Generated".
+* If AI signals clearly outweigh Human signals, classify as "AI Generated" with high confidence.
+* If Human signals clearly outweigh AI signals, classify as "Human Written" with high confidence.
+* Only use "Uncertain" if the text is completely ambiguous or lacks any identifiable signals.
+
 Determine which evidence is stronger overall.
 
 Possible Classifications:
 * AI Generated
 * Human Written
 * Uncertain
-
-Use "Uncertain" whenever evidence is balanced or insufficient.
 
 ---
 
