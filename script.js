@@ -596,99 +596,106 @@ function renderDetectorSkeleton() {
 }
 
 function renderDetectorResult(result) {
-  // result = { classification, confidence, ai_score, human_score, ai_signals, human_signals, metrics_analysis, reasoning }
-  
   const isHuman = result.classification === 'Human';
-  const isAI = result.classification === 'AI';
-  
-  let score, verdict, vClass, color;
-  
+  const isAI    = result.classification === 'AI';
+
+  let score, verdict, vClass, color, label;
+
   if (isAI) {
-    score = result.ai_score;
-    verdict = 'AI-Generated';
-    vClass = 'ai';
-    color = 'var(--ai)';
+    score   = Math.max(result.ai_score, result.confidence || 0);
+    verdict = '🤖 AI-Generated';
+    vClass  = 'ai';
+    color   = '#ff4444';
+    label   = 'AI Score';
   } else if (isHuman) {
-    score = result.human_score;
-    verdict = 'Human';
-    vClass = 'human';
-    color = 'var(--human)';
+    score   = Math.max(result.human_score, result.confidence || 0);
+    verdict = '✅ Human Written';
+    vClass  = 'human';
+    color   = '#00c9a7';
+    label   = 'Human Score';
   } else {
-    score = result.confidence; // or maybe average, or just ai_score
-    verdict = 'Mixed / Uncertain';
-    vClass = 'mixed';
-    color = 'var(--mixed)';
+    score   = result.confidence || 50;
+    verdict = '⚠️ Mixed / Uncertain';
+    vClass  = 'mixed';
+    color   = '#f59e0b';
+    label   = 'Confidence';
   }
 
-  const circumference = 408;
-  const offset = circumference - (score / 100) * circumference;
+  score = Math.min(100, Math.max(0, score));
+  const R = 65;
+  const circumference = 2 * Math.PI * R; // 408.41
 
   dResult.innerHTML = `
     <div class="detector-result">
-      <div class="meter-wrap" role="img" aria-label="${score}% Confidence">
-        <svg width="160" height="160" viewBox="0 0 160 160">
-          <circle class="meter-track" cx="80" cy="80" r="65"/>
-          <circle class="meter-fill" id="meter-fill" cx="80" cy="80" r="65"
-            style="stroke:${color};stroke-dashoffset:${circumference}"/>
+      <div class="meter-wrap" role="img" aria-label="${score}% ${label}">
+        <svg width="160" height="160" viewBox="0 0 160 160" style="transform:rotate(-90deg)">
+          <circle fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="12"
+            cx="80" cy="80" r="${R}"/>
+          <circle id="meter-fill" fill="none"
+            stroke="${color}" stroke-width="12" stroke-linecap="round"
+            cx="80" cy="80" r="${R}"
+            stroke-dasharray="${circumference}"
+            stroke-dashoffset="${circumference}"
+            style="transition:stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)"/>
         </svg>
-        <div class="meter-label">
-          <span class="meter-score" id="meter-score" style="color:${color}">0</span>
-          <span class="meter-unit">${isHuman ? 'Human Score' : 'AI Score'}</span>
+        <div class="meter-label" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <span id="meter-score" style="font-size:2.2rem;font-weight:800;color:${color};line-height:1;">0</span>
+          <span style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:3px;">${label}</span>
         </div>
       </div>
-      <span class="verdict-badge verdict-badge--${vClass}">${verdict}</span>
-      
-      <div class="analysis-section" style="margin-top: 20px; text-align: left; width: 100%;">
-        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px; text-align: center;">
-          ${escapeHtml(result.reasoning || '')}
-        </p>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-          <div style="background: rgba(255, 68, 68, 0.05); border: 1px solid rgba(255, 68, 68, 0.2); padding: 12px; border-radius: 8px;">
-            <h4 style="color: var(--ai); font-size: 0.85rem; margin-bottom: 8px;">AI Signals</h4>
-            <ul style="padding-left: 20px; font-size: 0.8rem; color: var(--text-muted);">
-              ${(result.ai_signals || []).slice(0,3).map(s => `<li>${escapeHtml(s)}</li>`).join('')}
-            </ul>
-          </div>
-          <div style="background: rgba(0, 201, 167, 0.05); border: 1px solid rgba(0, 201, 167, 0.2); padding: 12px; border-radius: 8px;">
-            <h4 style="color: var(--human); font-size: 0.85rem; margin-bottom: 8px;">Human Signals</h4>
-            <ul style="padding-left: 20px; font-size: 0.8rem; color: var(--text-muted);">
-              ${(result.human_signals || []).slice(0,3).map(s => `<li>${escapeHtml(s)}</li>`).join('')}
-            </ul>
-          </div>
+      <span class="verdict-badge verdict-badge--${vClass}" style="font-size:1rem;padding:8px 20px;margin-top:12px;">${verdict}</span>
+
+      <p style="font-size:0.85rem;color:var(--muted);margin:14px 0 18px;text-align:center;max-width:440px;line-height:1.6;">
+        ${escapeHtml(result.reasoning || '')}
+      </p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;margin-bottom:14px;">
+        <div style="background:rgba(255,68,68,0.06);border:1px solid rgba(255,68,68,0.18);padding:12px;border-radius:10px;">
+          <h4 style="color:#ff6b6b;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">🤖 AI Signals</h4>
+          <ul style="padding-left:16px;font-size:0.78rem;color:var(--muted);line-height:1.7;">
+            ${(result.ai_signals || []).slice(0,4).map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+          </ul>
         </div>
-
-        <div style="background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: 8px;">
-          <h4 style="font-size: 0.85rem; margin-bottom: 8px;">Metrics Analysis</h4>
-          <div style="display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.75rem; color: var(--text-muted);">
-            ${Object.entries(result.metrics_analysis || {}).map(([k, v]) => `
-              <div style="background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 4px;">
-                <strong style="color: var(--text);">${k.replace(/_/g, ' ')}:</strong> ${v}
-              </div>
-            `).join('')}
-          </div>
+        <div style="background:rgba(0,201,167,0.06);border:1px solid rgba(0,201,167,0.18);padding:12px;border-radius:10px;">
+          <h4 style="color:#00c9a7;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">✍️ Human Signals</h4>
+          <ul style="padding-left:16px;font-size:0.78rem;color:var(--muted);line-height:1.7;">
+            ${(result.human_signals || []).slice(0,4).map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+          </ul>
         </div>
       </div>
+
+      ${result.metrics_analysis ? `
+      <div style="background:var(--surface2,#1e1e22);border:1px solid var(--border);padding:12px;border-radius:10px;width:100%;">
+        <h4 style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;color:var(--text);">📊 Metrics</h4>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${Object.entries(result.metrics_analysis).map(([k, v]) => `
+            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:4px 10px;border-radius:6px;font-size:0.72rem;color:var(--muted);">
+              <strong style="color:var(--text);">${k.replace(/_/g,' ')}:</strong> ${v}
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
     </div>`;
 
-  // Animate meter
+  // Animate ring and count-up score
   requestAnimationFrame(() => {
     setTimeout(() => {
-      const fill = $('#meter-fill');
-      const scoreEl = $('#meter-score');
-      if (fill) fill.style.strokeDashoffset = offset;
+      const fill    = document.getElementById('meter-fill');
+      const scoreEl = document.getElementById('meter-score');
+      const targetOffset = circumference - (score / 100) * circumference;
+      if (fill) fill.style.strokeDashoffset = targetOffset;
 
-      // Count-up animation
       let current = 0;
-      const step = Math.ceil(score / 40) || 1;
+      const step = Math.ceil(score / 50) || 1;
       const interval = setInterval(() => {
         current = Math.min(current + step, score);
         if (scoreEl) scoreEl.textContent = current;
         if (current >= score) clearInterval(interval);
-      }, 30);
-    }, 80);
+      }, 25);
+    }, 100);
   });
 }
+
 
 async function runDetect() {
   const text = dInput.value.trim();
