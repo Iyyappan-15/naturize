@@ -744,7 +744,7 @@ function switchTab(tab) {
 function initTypewriter() {
   const el = $('#typewriter');
   if (!el) return;
-  const words = ['Undetectable.', 'Natural.', 'Free.'];
+  const words = ['More Natural.', 'Less Robotic.', 'Free.'];
   let wi = 0, ci = 0, deleting = false;
 
   function tick() {
