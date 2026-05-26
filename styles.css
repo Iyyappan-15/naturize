@@ -28,13 +28,37 @@
 
 /* 2. RESET */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:16px;line-height:1.65;overflow-x:hidden;min-height:100vh}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--font-body);
+  font-size:16px;line-height:1.65;overflow-x:hidden;min-height:100vh;
+  -webkit-overflow-scrolling:touch; /* momentum scroll on iOS */
+}
 img{display:block;max-width:100%}
-button{cursor:pointer;border:none;background:none;font-family:inherit}
-a{color:inherit;text-decoration:none}
-textarea{font-family:inherit;resize:vertical}
+button{
+  cursor:pointer;border:none;background:none;font-family:inherit;
+  -webkit-tap-highlight-color:transparent; /* remove grey flash on tap */
+  touch-action:manipulation; /* faster tap response */
+}
+a{
+  color:inherit;text-decoration:none;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+textarea{font-family:inherit;resize:vertical;-webkit-overflow-scrolling:touch}
 ul{list-style:none}
+/* Minimum touch target for all interactive elements on mobile */
+@media(max-width:768px){
+  button,a,[role="button"]{
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+  }
+  .footer-nav a{
+    min-height:36px;
+    justify-content:center;
+  }
+}
 
 /* 3. TYPOGRAPHY */
 h1,h2,h3,h4{font-family:var(--font-head);font-weight:700;line-height:1.2;letter-spacing:-0.02em}
@@ -212,12 +236,62 @@ section{position:relative}
 .toast--error .toast-dot{background:var(--danger)}
 
 /* ── FOOTER ── */
-.footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
-.footer-links{display:flex;gap:24px}
-.footer-links a{font-size:.85rem;color:var(--muted);transition:color var(--transition)}
-.footer-links a:hover{color:var(--text)}
-.footer-powered{font-size:.82rem;color:var(--muted)}
-.footer-powered span{color:var(--accent)}
+/* ── FOOTER ── */
+.footer {
+  padding: 40px 24px 28px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  text-align: center;
+}
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.footer-divider {
+  width: 100%;
+  max-width: 640px;
+  border: none;
+  border-top: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+.footer-columns {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  width: 100%;
+  max-width: 640px;
+  margin-bottom: 28px;
+}
+.footer-col-title {
+  color: var(--text);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+  font-family: var(--font-head);
+}
+.footer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.footer-nav a {
+  font-size: 0.82rem;
+  color: var(--muted);
+  transition: color var(--transition);
+  line-height: 1.5;
+}
+.footer-nav a:hover { color: var(--accent); }
+.footer-links { display: flex; gap: 24px; }
+.footer-links a { font-size: .85rem; color: var(--muted); transition: color var(--transition); }
+.footer-links a:hover { color: var(--text); }
+.footer-powered { font-size: .82rem; color: var(--muted); }
+.footer-powered span { color: var(--accent); }
 
 /* ── SCROLL REVEAL ── */
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
@@ -242,15 +316,23 @@ section{position:relative}
   .pricing-grid{grid-template-columns:1fr}
   .features-grid{grid-template-columns:1fr}
   .tool-section .container{flex-direction:column}
-  .footer{flex-direction:column;text-align:center}
-  .footer-links{justify-content:center}
+  /* Footer — stack columns vertically on mobile */
+  .footer-columns {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .footer-divider { margin-bottom: 20px; }
 }
 @media(max-width:480px){
   .hero__ctas{flex-direction:column;align-items:stretch}
   .btn{justify-content:center}
   .panel-actions{flex-direction:column}
   .panel-actions .btn{width:100%;justify-content:center}
+  /* Ensure footer text never overflows */
+  .footer-nav a { word-break: break-word; }
+  .footer-columns { padding: 0 8px; }
 }
+
 
 /* ── LIGHT THEME ── */
 html.light {

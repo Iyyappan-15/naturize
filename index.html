@@ -489,17 +489,21 @@
   <!-- ═══════════════════════════════════════
        FOOTER
   ═══════════════════════════════════════ -->
-  <footer class="footer" role="contentinfo" style="justify-content: center; gap: 48px;">
-  <div style="display:flex;align-items:center;gap:8px;">
-      <img src="logo.png" alt="Naturize" width="26" height="26" style="border-radius:5px;object-fit:cover" />
+  <footer class="footer" role="contentinfo">
+
+    <!-- Brand -->
+    <div class="footer-brand">
+      <img src="logo.png" alt="Naturize logo" width="26" height="26" style="border-radius:5px;object-fit:cover" />
       <span style="font-family:var(--font-head);font-weight:700;font-size:.95rem">Naturize</span>
     </div>
 
-    <footer class="footer">
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; max-width: 800px; margin: 0 auto; text-align: center; margin-bottom: 2rem;">
-      <div>
-        <h4 style="color: var(--text); margin-bottom: 1rem; font-size: 0.9rem;">Naturize</h4>
-        <nav class="footer-nav" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+    <hr class="footer-divider" />
+
+    <!-- Link columns -->
+    <div class="footer-columns">
+      <div class="footer-col">
+        <h4 class="footer-col-title">Naturize</h4>
+        <nav class="footer-nav">
           <a href="privacy.html">Privacy Policy</a>
           <a href="terms.html">Terms</a>
           <a href="contact.html">Contact</a>
