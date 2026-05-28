@@ -10,6 +10,24 @@
 
   <!-- Tools -->
   <url>
+    <loc>https://naturize.iyyappan.me/tools/assignment-generator.html</loc>
+    <lastmod>2026-05-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://naturize.iyyappan.me/tools/email-composer.html</loc>
+    <lastmod>2026-05-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://naturize.iyyappan.me/tools/cover-letter-generator.html</loc>
+    <lastmod>2026-05-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
     <loc>https://naturize.iyyappan.me/tools/writing-analyzer.html</loc>
     <lastmod>2026-05-28</lastmod>
     <changefreq>monthly</changefreq>
