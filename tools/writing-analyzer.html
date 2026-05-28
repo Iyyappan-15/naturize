@@ -164,15 +164,15 @@
 
 <!-- NAVBAR -->
 <header>
-  <nav class="navbar">
-    <a href="../index.html" class="nav-logo">
-      <img src="../logo.png" alt="Naturize logo" width="28" height="28" style="border-radius:6px;object-fit:cover" />
+  <nav class="navbar" aria-label="Main navigation">
+    <a href="../index.html" class="nav-logo" aria-label="Naturize home">
+      <img src="../logo.png" alt="Naturize logo" width="30" height="30" style="border-radius:6px;object-fit:cover" />
       <span>Natur<span>ize</span></span>
     </a>
-    <div class="nav-links">
-      <a href="../index.html">Humanizer</a>
-      <a href="../index.html#tool">Detector</a>
-      <div class="nav-dropdown">
+    <div class="nav-links" role="list">
+      <a href="../index.html#tool" role="listitem">Humanizer</a>
+      <a href="../index.html#tool" role="listitem">Detector</a>
+      <div class="nav-dropdown" role="listitem">
         <a href="#" style="cursor: default;" class="active">Generators ▾</a>
         <div class="nav-dropdown-content">
           <a href="assignment-generator.html">Assignment Generator</a>
@@ -181,9 +181,24 @@
           <a href="writing-analyzer.html" class="active">Writing Analyzer</a>
         </div>
       </div>
-      <a href="../blog/index.html">Guides</a>
+      <a href="../index.html#features" role="listitem">Features</a>
+      <a href="../index.html#donate" role="listitem">Donate</a>
     </div>
-    <a href="../index.html" class="nav-cta">Try Free Tool</a>
+    <div class="nav-right">
+      <button class="hamburger" id="hamburger" aria-label="Toggle mobile menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <nav class="mobile-menu" id="mobile-menu">
+    <a href="../index.html#tool">Humanizer</a>
+    <a href="../index.html#tool">Detector</a>
+    <a href="assignment-generator.html">Assignment Generator</a>
+    <a href="email-composer.html">Email Composer</a>
+    <a href="cover-letter-generator.html">Cover Letter Generator</a>
+    <a href="writing-analyzer.html" class="active">Writing Analyzer</a>
+    <a href="../index.html#features">Features</a>
   </nav>
 </header>
 
@@ -661,6 +676,15 @@ textarea.addEventListener('input', () => {
 
 // Initial run
 analyze();
+
+// Mobile menu toggle
+const hamburgerBtn = document.getElementById('hamburger');
+if (hamburgerBtn) {
+  hamburgerBtn.addEventListener('click', function() {
+    this.classList.toggle('open');
+    document.getElementById('mobile-menu').classList.toggle('open');
+  });
+}
 </script>
 
 </body>
