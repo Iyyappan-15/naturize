@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Free Live Writing Analyzer — AI Words, Readability & Stats | Naturize</title>
+  <meta name="description" content="Free real-time writing analyzer. Instantly see your word count, reading level, readability score, passive voice sentences, and AI cliché words highlighted as you type. No signup needed." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://naturize.iyyappan.me/tools/writing-analyzer.html" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1a1a24;
+      --border: rgba(255,255,255,0.07);
+      --text: #f0f0f5;
+      --muted: #8888a0;
+      --accent: #00e5c0;
+      --accent2: #7c6fff;
+      --warn: #ffb347;
+      --danger: #ff5c7a;
+      --radius: 12px;
+      --font: 'Inter', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; height: 64px;
+      background: rgba(10,10,15,0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 700; font-size: 1.1rem; color: var(--text); }
+    .nav-logo span span { color: var(--accent); }
+    .nav-links { display: flex; gap: 1.8rem; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+    .nav-cta { background: var(--accent); color: #000; padding: 8px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; text-decoration: none; transition: opacity 0.2s; }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      text-align: center; padding: 60px 20px 40px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(0,229,192,0.08) 0%, transparent 70%);
+    }
+    .page-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,229,192,0.1); border: 1px solid rgba(0,229,192,0.2); color: var(--accent); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 20px; }
+    .page-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+    .page-header h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; margin-bottom: 14px; line-height: 1.2; }
+    .page-header h1 span { color: var(--accent); }
+    .page-header p { color: var(--muted); font-size: 1.05rem; max-width: 600px; margin: 0 auto; line-height: 1.7; }
+
+    /* ── MAIN LAYOUT ── */
+    .analyzer-wrapper { max-width: 1400px; margin: 0 auto; padding: 0 20px 60px; display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+    @media(max-width: 1024px) { .analyzer-wrapper { grid-template-columns: 1fr; } }
+
+    /* ── EDITOR PANEL ── */
+    .editor-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .editor-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); background: var(--surface2); gap: 12px; flex-wrap: wrap; }
+    .toolbar-title { font-size: 0.88rem; font-weight: 600; color: var(--muted); }
+    .toolbar-actions { display: flex; gap: 8px; }
+    .toolbar-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: var(--font); }
+    .toolbar-btn:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+
+    .editor-area { position: relative; }
+    #main-textarea {
+      width: 100%; min-height: 460px; padding: 20px;
+      background: transparent; color: var(--text);
+      border: none; outline: none; resize: vertical;
+      font-family: var(--font); font-size: 1rem; line-height: 1.8;
+      caret-color: var(--accent);
+    }
+    #main-textarea::placeholder { color: var(--muted); }
+
+    /* ── HIGHLIGHTED PREVIEW ── */
+    .preview-panel { border-top: 1px solid var(--border); padding: 20px; display: none; }
+    .preview-panel.visible { display: block; }
+    .preview-label { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .preview-label span { background: rgba(255,92,122,0.1); color: var(--danger); border: 1px solid rgba(255,92,122,0.2); padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; }
+    .preview-content { font-size: 0.95rem; line-height: 1.9; color: var(--text); }
+    .preview-content mark.ai-word { background: rgba(255,92,122,0.18); color: #ff8fa0; border-radius: 3px; padding: 1px 3px; border-bottom: 2px solid var(--danger); }
+    .preview-content mark.passive { background: rgba(255,179,71,0.15); color: var(--warn); border-radius: 3px; padding: 1px 3px; border-bottom: 2px solid var(--warn); }
+    .preview-content mark.long-sent { background: rgba(124,111,255,0.12); color: #a89fff; border-radius: 3px; padding: 1px 3px; }
+
+    /* ── TOGGLE MODES ── */
+    .view-toggle { display: flex; gap: 6px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 4px; }
+    .view-btn { padding: 5px 12px; border-radius: 5px; font-size: 0.78rem; font-weight: 600; cursor: pointer; border: none; background: transparent; color: var(--muted); font-family: var(--font); transition: all 0.2s; }
+    .view-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+
+    /* ── STATS SIDEBAR ── */
+    .stats-sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+    .stat-card-title { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 14px; }
+
+    /* Core numbers */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat-item { text-align: center; }
+    .stat-num { font-size: 1.9rem; font-weight: 700; color: var(--text); line-height: 1; transition: all 0.2s; }
+    .stat-num.highlight { color: var(--accent); }
+    .stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+
+    /* Readability gauge */
+    .gauge-wrap { margin: 6px 0 10px; }
+    .gauge-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+    .gauge-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease, background 0.4s ease; }
+    .gauge-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); margin-top: 5px; }
+
+    .readability-score { font-size: 2rem; font-weight: 700; text-align: center; margin: 8px 0 4px; transition: color 0.3s; }
+    .readability-grade { text-align: center; font-size: 0.82rem; color: var(--muted); }
+    .readability-label { text-align: center; font-size: 0.78rem; font-weight: 600; margin-top: 6px; padding: 4px 10px; border-radius: 20px; display: inline-block; margin: 6px auto 0; }
+
+    /* AI word list */
+    .ai-words-found { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; min-height: 32px; }
+    .ai-chip { background: rgba(255,92,122,0.1); border: 1px solid rgba(255,92,122,0.2); color: #ff8fa0; font-size: 0.75rem; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+    .no-ai { color: var(--accent); font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+    .no-ai::before { content: '✓'; font-weight: 700; }
+
+    /* Sentence breakdown */
+    .sent-bars { display: flex; flex-direction: column; gap: 8px; }
+    .sent-bar-row { display: flex; align-items: center; gap: 10px; }
+    .sent-bar-label { font-size: 0.75rem; color: var(--muted); width: 70px; flex-shrink: 0; }
+    .sent-bar-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+    .sent-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+    .sent-bar-count { font-size: 0.75rem; color: var(--muted); width: 24px; text-align: right; flex-shrink: 0; }
+
+    /* Top words */
+    .word-freq { display: flex; flex-direction: column; gap: 7px; }
+    .word-freq-row { display: flex; align-items: center; gap: 8px; }
+    .word-freq-word { font-size: 0.82rem; color: var(--text); width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .word-freq-bar { flex: 1; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+    .word-freq-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent2), var(--accent)); transition: width 0.4s ease; }
+    .word-freq-count { font-size: 0.72rem; color: var(--muted); width: 20px; text-align: right; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 24px 10px; color: var(--muted); font-size: 0.88rem; }
+    .empty-state .icon { font-size: 2rem; margin-bottom: 8px; opacity: 0.5; }
+
+    /* Legend */
+    .legend { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+    /* ── FOOTER ── */
+    .page-footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
+    .page-footer a { color: var(--accent); text-decoration: none; }
+
+    @media(max-width: 600px) {
+      .page-header { padding: 40px 16px 30px; }
+      .analyzer-wrapper { padding: 0 12px 40px; gap: 16px; }
+      #main-textarea { min-height: 300px; font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header>
+  <nav class="navbar">
+    <a href="../index.html" class="nav-logo">
+      <img src="../logo.png" alt="Naturize logo" width="28" height="28" style="border-radius:6px;object-fit:cover" />
+      <span>Natur<span>ize</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="../index.html">Humanizer</a>
+      <a href="../index.html#tool">Detector</a>
+      <a href="writing-analyzer.html" class="active">Writing Analyzer</a>
+      <a href="../blog/index.html">Guides</a>
+    </div>
+    <a href="../index.html" class="nav-cta">Try Free Tool</a>
+  </nav>
+</header>
+
+<!-- PAGE HEADER -->
+<section class="page-header">
+  <div class="page-badge">LIVE · No Signup · 100% Free</div>
+  <h1>Live <span>Writing Analyzer</span></h1>
+  <p>Paste or type any text. Instantly see your word count, readability score, AI cliché words, passive voice, and sentence patterns — all in real time.</p>
+</section>
+
+<!-- MAIN CONTENT -->
+<div class="analyzer-wrapper">
+
+  <!-- LEFT: EDITOR -->
+  <div>
+    <div class="editor-panel">
+      <div class="editor-toolbar">
+        <span class="toolbar-title">Your Text</span>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div class="view-toggle">
+            <button class="view-btn active" id="btn-edit" onclick="setView('edit')">✏️ Edit</button>
+            <button class="view-btn" id="btn-highlight" onclick="setView('highlight')">🔍 Highlights</button>
+          </div>
+          <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="loadSample()">Load Sample</button>
+            <button class="toolbar-btn" onclick="clearAll()">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-area">
+        <textarea
+          id="main-textarea"
+          placeholder="Paste your essay, email, blog post, or any text here...&#10;&#10;The analyzer will instantly show you:&#10;• Word count, reading time, grade level&#10;• AI cliché words highlighted in red&#10;• Passive voice sentences&#10;• Sentence length variance&#10;• Top words used"
+          spellcheck="true"
+          aria-label="Text input for analysis"
+        ></textarea>
+      </div>
+
+      <!-- HIGHLIGHT PREVIEW -->
+      <div class="preview-panel" id="preview-panel">
+        <div class="preview-label">
+          Highlighted View
+          <span id="ai-count-badge">0 AI words</span>
+        </div>
+        <div class="preview-content" id="preview-content"></div>
+      </div>
+    </div>
+
+    <!-- LEGEND -->
+    <div class="stat-card" style="margin-top:16px;">
+      <div class="stat-card-title">Highlight Legend</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,92,122,0.5);border:1px solid #ff5c7a;"></div> <strong style="color:#ff8fa0;">AI Cliché Word</strong> — Overused by AI models (e.g. "delve", "tapestry")</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,179,71,0.5);border:1px solid var(--warn);"></div> <strong style="color:var(--warn);">Passive Voice</strong> — Consider rewriting as active voice</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(124,111,255,0.4);border:1px solid var(--accent2);"></div> <strong style="color:#a89fff;">Long Sentence</strong> — More than 35 words; may need splitting</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: STATS SIDEBAR -->
+  <div class="stats-sidebar">
+
+    <!-- Core Stats -->
+    <div class="stat-card">
+      <div class="stat-card-title">📊 Quick Stats</div>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="stat-num" id="stat-words">0</div>
+          <div class="stat-label">Words</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="stat-chars">0</div>
+          <div class="stat-label">Characters</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="stat-sentences">0</div>
+          <div class="stat-label">Sentences</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="stat-readtime">0</div>
+          <div class="stat-label">Min Read</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Readability Score -->
+    <div class="stat-card">
+      <div class="stat-card-title">📖 Readability Score</div>
+      <div id="readability-empty" class="empty-state"><div class="icon">📝</div>Type to see score</div>
+      <div id="readability-data" style="display:none;">
+        <div class="readability-score" id="stat-flesch">—</div>
+        <div class="readability-grade" id="stat-grade">—</div>
+        <div style="display:flex; justify-content:center;">
+          <div class="readability-label" id="readability-label">—</div>
+        </div>
+        <div class="gauge-wrap" style="margin-top:14px;">
+          <div class="gauge-bar"><div class="gauge-fill" id="gauge-fill" style="width:0%;"></div></div>
+          <div class="gauge-labels"><span>Hard</span><span>Easy</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Clichés Found -->
+    <div class="stat-card">
+      <div class="stat-card-title">🤖 AI Cliché Words Found</div>
+      <div class="ai-words-found" id="ai-words-container">
+        <div class="empty-state" style="padding:8px 0; text-align:left;"><div class="icon" style="font-size:1.2rem;">✨</div>Type to scan for AI words</div>
+      </div>
+    </div>
+
+    <!-- Sentence Breakdown -->
+    <div class="stat-card">
+      <div class="stat-card-title">📏 Sentence Lengths</div>
+      <div id="sent-empty" class="empty-state"><div class="icon">📐</div>Type to see sentence analysis</div>
+      <div id="sent-data" style="display:none;">
+        <div class="sent-bars">
+          <div class="sent-bar-row">
+            <div class="sent-bar-label" style="color:var(--accent);">Short (&lt;12w)</div>
+            <div class="sent-bar-track"><div class="sent-bar-fill" id="bar-short" style="width:0%; background:var(--accent);"></div></div>
+            <div class="sent-bar-count" id="count-short">0</div>
+          </div>
+          <div class="sent-bar-row">
+            <div class="sent-bar-label" style="color:var(--warn);">Medium (12–25)</div>
+            <div class="sent-bar-track"><div class="sent-bar-fill" id="bar-medium" style="width:0%; background:var(--warn);"></div></div>
+            <div class="sent-bar-count" id="count-medium">0</div>
+          </div>
+          <div class="sent-bar-row">
+            <div class="sent-bar-label" style="color:var(--accent2);">Long (&gt;25w)</div>
+            <div class="sent-bar-track"><div class="sent-bar-fill" id="bar-long" style="width:0%; background:var(--accent2);"></div></div>
+            <div class="sent-bar-count" id="count-long">0</div>
+          </div>
+        </div>
+        <div style="margin-top:12px; font-size:0.8rem; color:var(--muted);">Avg: <span id="stat-avg-sent" style="color:var(--text);">— words/sentence</span></div>
+        <div style="margin-top:4px; font-size:0.8rem; color:var(--muted);">Passive voice: <span id="stat-passive" style="color:var(--warn);">0 sentences</span></div>
+      </div>
+    </div>
+
+    <!-- Top Words -->
+    <div class="stat-card">
+      <div class="stat-card-title">🔤 Most Used Words</div>
+      <div id="words-empty" class="empty-state"><div class="icon">🔤</div>Type to see word frequency</div>
+      <div class="word-freq" id="word-freq-list"></div>
+    </div>
+
+    <!-- Action -->
+    <div class="stat-card" style="background: linear-gradient(135deg, rgba(0,229,192,0.08), rgba(124,111,255,0.08)); border-color: rgba(0,229,192,0.2);">
+      <div class="stat-card-title" style="color:var(--accent);">✨ Too Many AI Words?</div>
+      <p style="font-size:0.85rem; color:var(--muted); line-height:1.6; margin-bottom:14px;">Use the Naturize Humanizer to rewrite your text and remove AI patterns automatically.</p>
+      <a href="../index.html" style="display:block; text-align:center; background:var(--accent); color:#000; padding:10px; border-radius:8px; font-size:0.88rem; font-weight:700; text-decoration:none;">Open Humanizer →</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="page-footer">
+  <a href="../index.html">← Back to Naturize Home</a> &nbsp;·&nbsp;
+  <a href="../blog/index.html">Guides</a> &nbsp;·&nbsp;
+  <a href="../privacy.html">Privacy</a> &nbsp;·&nbsp;
+  <span>Free · No Signup · No Tracking</span>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════
+// AI CLICHÉ WORD LIST (60+ words)
+// ══════════════════════════════════════════════
+const AI_CLICHES = [
+  'delve','delves','delved','delving',
+  'tapestry','tapestries',
+  'leverage','leverages','leveraged','leveraging',
+  'furthermore','moreover','additionally','consequently',
+  'it is important to note','it is worth noting','it should be noted',
+  'in conclusion','in summary','to summarize',
+  'plays a crucial role','play a crucial role',
+  'crucial','pivotal','paramount','imperative',
+  'navigate','navigates','navigating','navigated',
+  'realm','realms','landscape','landscapes',
+  'embark','embarks','embarked','embarking',
+  'multifaceted','nuanced','nuance','nuances',
+  'testament','testaments',
+  'underscore','underscores','underscored',
+  'comprehensive','encompassing',
+  'facilitate','facilitates','facilitated','facilitating',
+  'utilize','utilizes','utilized','utilizing',
+  'robust','holistic','synergy','synergies',
+  'groundbreaking','transformative','revolutionary',
+  'shed light','sheds light','shed light on',
+  'dive deep','dive deeper','dive into',
+  'at its core','at the heart of',
+  'going forward','moving forward',
+  'in today\'s world','in the modern world','in today\'s fast-paced',
+  'ever-evolving','ever-changing','rapidly evolving',
+  'not only but also','not only...but also',
+  'first and foremost','last but not least',
+  'without further ado','needless to say',
+  'think outside the box','game-changer','game changer',
+  'cutting-edge','state-of-the-art',
+  'take into account','take into consideration',
+];
+
+// Passive voice patterns (simplified)
+const PASSIVE_PATTERNS = [
+  /\b(is|are|was|were|be|been|being)\s+([\w]+ed)\b/gi,
+  /\b(has|have|had)\s+been\s+([\w]+ed)\b/gi,
+];
+
+const textarea = document.getElementById('main-textarea');
+let currentView = 'edit';
+let debounceTimer;
+
+// ── VIEW TOGGLE ──
+function setView(view) {
+  currentView = view;
+  const editBtn = document.getElementById('btn-edit');
+  const hlBtn = document.getElementById('btn-highlight');
+  const previewPanel = document.getElementById('preview-panel');
+
+  if (view === 'edit') {
+    editBtn.classList.add('active');
+    hlBtn.classList.remove('active');
+    previewPanel.classList.remove('visible');
+    textarea.style.display = 'block';
+  } else {
+    hlBtn.classList.add('active');
+    editBtn.classList.remove('active');
+    previewPanel.classList.add('visible');
+    textarea.style.display = 'none';
+    renderHighlights(textarea.value);
+  }
+}
+
+// ── RENDER HIGHLIGHTS ──
+function renderHighlights(text) {
+  if (!text.trim()) {
+    document.getElementById('preview-content').innerHTML = '<span style="color:var(--muted)">Nothing to highlight yet.</span>';
+    return;
+  }
+
+  // Split into sentences
+  const sentences = splitSentences(text);
+  let html = '';
+  let aiCount = 0;
+
+  sentences.forEach(sent => {
+    let processed = escapeHtml(sent);
+
+    // Check if long sentence
+    const wordCount = sent.split(/\s+/).filter(Boolean).length;
+    const isLong = wordCount > 35;
+
+    // Check passive voice
+    let isPassive = false;
+    PASSIVE_PATTERNS.forEach(p => {
+      if (p.test(sent)) isPassive = true;
+    });
+
+    // Highlight AI clichés (case-insensitive)
+    const sortedCliches = [...AI_CLICHES].sort((a,b) => b.length - a.length);
+    sortedCliches.forEach(cliche => {
+      const regex = new RegExp(`\\b${escapeRegex(cliche)}\\b`, 'gi');
+      if (regex.test(processed)) aiCount++;
+      processed = processed.replace(new RegExp(`\\b(${escapeRegex(cliche)})\\b`, 'gi'),
+        '<mark class="ai-word">$1</mark>');
+    });
+
+    // Wrap sentence
+    if (isLong && !isPassive) {
+      html += `<mark class="long-sent">${processed}</mark> `;
+    } else if (isPassive) {
+      html += `<mark class="passive">${processed}</mark> `;
+    } else {
+      html += processed + ' ';
+    }
+  });
+
+  document.getElementById('preview-content').innerHTML = html;
+  document.getElementById('ai-count-badge').textContent = aiCount + ' AI words';
+}
+
+// ── MAIN ANALYZE FUNCTION ──
+function analyze() {
+  const text = textarea.value;
+
+  // Words
+  const words = text.trim() ? text.trim().split(/\s+/).filter(Boolean) : [];
+  const wordCount = words.length;
+  const charCount = text.length;
+
+  // Sentences
+  const sentences = splitSentences(text.trim());
+  const sentCount = sentences.filter(s => s.trim().length > 0).length;
+
+  // Reading time (avg 238 wpm)
+  const readTime = wordCount > 0 ? Math.max(1, Math.round(wordCount / 238)) : 0;
+
+  // Update quick stats
+  animateNum('stat-words', wordCount);
+  animateNum('stat-chars', charCount);
+  animateNum('stat-sentences', sentCount);
+  document.getElementById('stat-readtime').textContent = readTime || '0';
+
+  // ── READABILITY (Flesch-Kincaid) ──
+  if (wordCount >= 10 && sentCount > 0) {
+    const syllableCount = words.reduce((acc, w) => acc + countSyllables(w), 0);
+    const flesch = 206.835 - 1.015 * (wordCount / sentCount) - 84.6 * (syllableCount / wordCount);
+    const score = Math.max(0, Math.min(100, Math.round(flesch)));
+
+    document.getElementById('stat-flesch').textContent = score;
+    document.getElementById('readability-empty').style.display = 'none';
+    document.getElementById('readability-data').style.display = 'block';
+
+    let grade, label, color;
+    if (score >= 90) { grade = 'Grade 5'; label = 'Very Easy'; color = '#00e5c0'; }
+    else if (score >= 80) { grade = 'Grade 6'; label = 'Easy'; color = '#4cd964'; }
+    else if (score >= 70) { grade = 'Grade 7'; label = 'Fairly Easy'; color = '#5ac8fa'; }
+    else if (score >= 60) { grade = 'Grade 8–9'; label = 'Standard'; color = '#ffb347'; }
+    else if (score >= 50) { grade = 'Grade 10–12'; label = 'Fairly Difficult'; color = '#ff9500'; }
+    else if (score >= 30) { grade = 'College Level'; label = 'Difficult'; color = '#ff5c7a'; }
+    else { grade = 'Professional'; label = 'Very Difficult'; color = '#ff3b30'; }
+
+    document.getElementById('stat-flesch').style.color = color;
+    document.getElementById('stat-grade').textContent = grade;
+    document.getElementById('gauge-fill').style.width = score + '%';
+    document.getElementById('gauge-fill').style.background = color;
+
+    const labelEl = document.getElementById('readability-label');
+    labelEl.textContent = label;
+    labelEl.style.background = color + '20';
+    labelEl.style.color = color;
+    labelEl.style.border = `1px solid ${color}40`;
+  } else {
+    document.getElementById('readability-empty').style.display = 'block';
+    document.getElementById('readability-data').style.display = 'none';
+  }
+
+  // ── AI CLICHÉS ──
+  const aiContainer = document.getElementById('ai-words-container');
+  if (wordCount > 0) {
+    const foundCliches = new Set();
+    const textLower = text.toLowerCase();
+    AI_CLICHES.forEach(c => {
+      const re = new RegExp(`\\b${escapeRegex(c)}\\b`, 'i');
+      if (re.test(textLower)) foundCliches.add(c);
+    });
+
+    if (foundCliches.size === 0) {
+      aiContainer.innerHTML = '<div class="no-ai">No AI cliché words detected</div>';
+    } else {
+      aiContainer.innerHTML = [...foundCliches].slice(0, 12).map(c =>
+        `<span class="ai-chip">${c}</span>`).join('');
+    }
+  } else {
+    aiContainer.innerHTML = '<div class="empty-state" style="padding:8px 0; text-align:left;"><div class="icon" style="font-size:1.2rem;">✨</div>Type to scan for AI words</div>';
+  }
+
+  // ── SENTENCE BREAKDOWN ──
+  if (sentCount > 0) {
+    document.getElementById('sent-empty').style.display = 'none';
+    document.getElementById('sent-data').style.display = 'block';
+
+    let short = 0, medium = 0, long = 0, passive = 0, totalWords = 0;
+    sentences.forEach(s => {
+      const wc = s.split(/\s+/).filter(Boolean).length;
+      if (wc < 1) return;
+      totalWords += wc;
+      if (wc < 12) short++;
+      else if (wc <= 25) medium++;
+      else long++;
+      PASSIVE_PATTERNS.forEach(p => { if (p.test(s)) passive++; });
+    });
+
+    const max = Math.max(short, medium, long, 1);
+    document.getElementById('bar-short').style.width = (short / max * 100) + '%';
+    document.getElementById('bar-medium').style.width = (medium / max * 100) + '%';
+    document.getElementById('bar-long').style.width = (long / max * 100) + '%';
+    document.getElementById('count-short').textContent = short;
+    document.getElementById('count-medium').textContent = medium;
+    document.getElementById('count-long').textContent = long;
+    document.getElementById('stat-avg-sent').textContent = (totalWords / sentCount).toFixed(1) + ' words/sentence';
+    document.getElementById('stat-passive').textContent = passive + (passive === 1 ? ' sentence' : ' sentences');
+  } else {
+    document.getElementById('sent-empty').style.display = 'block';
+    document.getElementById('sent-data').style.display = 'none';
+  }
+
+  // ── TOP WORDS ──
+  const freqContainer = document.getElementById('word-freq-list');
+  const emptyWords = document.getElementById('words-empty');
+  const STOP_WORDS = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','could','should','may','might','i','you','he','she','it','we','they','that','this','these','those','not','from','by','as','if','so','then','than','when','where','who','which','what','how','all','can','more','their','there','they\'re','your','about','also','just','up','its','into','out','no','but','her','his','him','my','me','our','us','we','any','other','each','only','same','most','such','both','even','much','many']);
+
+  if (wordCount >= 5) {
+    emptyWords.style.display = 'none';
+    const freq = {};
+    words.forEach(w => {
+      const clean = w.toLowerCase().replace(/[^a-z']/g, '');
+      if (clean.length > 3 && !STOP_WORDS.has(clean)) {
+        freq[clean] = (freq[clean] || 0) + 1;
+      }
+    });
+    const sorted = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0,7);
+    const maxFreq = sorted[0]?.[1] || 1;
+
+    freqContainer.innerHTML = sorted.map(([word, count]) => `
+      <div class="word-freq-row">
+        <div class="word-freq-word">${word}</div>
+        <div class="word-freq-bar"><div class="word-freq-fill" style="width:${count/maxFreq*100}%"></div></div>
+        <div class="word-freq-count">${count}</div>
+      </div>`).join('');
+  } else {
+    emptyWords.style.display = 'block';
+    freqContainer.innerHTML = '';
+  }
+
+  // Update highlights if in highlight view
+  if (currentView === 'highlight') renderHighlights(text);
+}
+
+// ── HELPERS ──
+function splitSentences(text) {
+  return text.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+}
+
+function countSyllables(word) {
+  word = word.toLowerCase().replace(/[^a-z]/g, '');
+  if (!word) return 0;
+  if (word.length <= 3) return 1;
+  word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+  word = word.replace(/^y/, '');
+  const m = word.match(/[aeiouy]{1,2}/g);
+  return m ? m.length : 1;
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function animateNum(id, target) {
+  const el = document.getElementById(id);
+  const current = parseInt(el.textContent) || 0;
+  if (current === target) return;
+  el.textContent = target;
+  el.classList.add('highlight');
+  setTimeout(() => el.classList.remove('highlight'), 300);
+}
+
+// ── SAMPLE TEXT ──
+function loadSample() {
+  textarea.value = `Universities across the United States, United Kingdom, India and Canada are increasingly relying on Turnitin's AI detection feature to flag student submissions. Furthermore, it is important to note that this technology has significantly transformed the landscape of academic integrity. Many students delve into the realm of AI writing tools like ChatGPT and Gemini to assist with their assignments.
+
+However, the multifaceted nature of this issue requires us to navigate carefully. At its core, the problem is not merely about detecting AI text, but about fostering genuine learning. Leveraging these tools can be a game-changer when used responsibly. In today's fast-paced, ever-evolving academic environment, students must embark on a journey of understanding both the capabilities and limitations of AI writing assistants.
+
+In conclusion, it is paramount that educational institutions develop comprehensive policies that are nuanced enough to distinguish between AI-assisted writing and genuine academic dishonesty. The tapestry of modern education must be woven with threads of innovation and integrity alike.`;
+  analyze();
+  setView('edit');
+}
+
+function clearAll() {
+  textarea.value = '';
+  analyze();
+  setView('edit');
+}
+
+// ── EVENT LISTENER ──
+textarea.addEventListener('input', () => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(analyze, 80);
+});
+
+// Initial run
+analyze();
+</script>
+
+</body>
+</html>
