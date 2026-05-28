@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
 
   <style>
     :root {
@@ -30,21 +31,6 @@
     html { scroll-behavior: smooth; }
     body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
 
-    /* ── NAVBAR ── */
-    .navbar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 2rem; height: 64px;
-      background: rgba(10,10,15,0.85); backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; z-index: 100;
-    }
-    .nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 700; font-size: 1.1rem; color: var(--text); }
-    .nav-logo span span { color: var(--accent); }
-    .nav-links { display: flex; gap: 1.8rem; }
-    .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
-    .nav-links a:hover, .nav-links a.active { color: var(--accent); }
-    .nav-cta { background: var(--accent); color: #000; padding: 8px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; text-decoration: none; transition: opacity 0.2s; }
-    .nav-cta:hover { opacity: 0.85; }
 
     /* ── PAGE HEADER ── */
     .page-header {
@@ -149,9 +135,6 @@
     .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); }
     .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 
-    /* ── FOOTER ── */
-    .page-footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
-    .page-footer a { color: var(--accent); text-decoration: none; }
 
     @media(max-width: 600px) {
       .page-header { padding: 40px 16px 30px; }
