@@ -38,17 +38,18 @@ OBJECTIVES:
 
 CORE REWRITE RULES (CRITICAL FOR BYPASSING DETECTORS):
 
-1. THE 3-1-3 PARAGRAPH RULE
-- Randomly mix single-sentence paragraphs with longer paragraphs. Never use uniformly sized blocks of text.
+1. SEMANTIC OBFUSCATION (NON-STANDARD PHRASING)
+- Explain facts using unconventional, slightly disjointed wording. Do NOT use the most obvious or common way to describe a concept.
+- Avoid all conversational AI clichés like "Think about this:", "Here's the thing:", or "To put it simply". Be direct but grammatically asymmetrical.
+- Do NOT try to sound "casual" or "conversational" in a fake way. Focus on structuring the information uniquely.
 
-2. CONVERSATIONAL ANCHORS & IMPERFECTIONS
-- Use conversational framing (e.g., "Here's the thing:", "Think about it like this:", "To put it simply,").
-- occasionally start sentences with conjunctions like "And", "But", or "So". (AI models rarely do this, humans do it often).
+2. ASYMMETRICAL GRAMMAR & BURSTINESS
+- Aggressively vary sentence lengths. Mix short, medium, and long sentences naturally.
+- Start sentences with verbs, complex clauses, or prepositional phrases to break the standard "Subject-Verb-Object" AI rhythm.
 - Use active voice strictly. Avoid passive voice constructions.
 
-3. EXTREME BURSTINESS & RHYTHM
-- Aggressively vary sentence lengths. Mix short, medium, and long sentences naturally.
-- Introduce extreme burstiness. Break predictable patterns by occasionally using very short, punchy sentences (e.g., "This changes everything." or "But it worked.").
+3. THE 3-1-3 PARAGRAPH RULE
+- Randomly mix single-sentence paragraphs with longer paragraphs. Never use uniformly sized blocks of text.
 
 4. EXTREMELY SIMPLE VOCABULARY
 - Use simple, everyday words. Prefer common vocabulary over complex jargon.
@@ -146,11 +147,13 @@ Avoid or replace phrases like:
     if (!rawOutput.trim())
       return res.status(502).json({ error: "Empty response from AI. Please try again." });
 
-    // Clean preamble
+    // Draconian Preamble Cleanup
     rawOutput = rawOutput
-      .replace(/^(here(?:'s| is) the rewritten[^:\n]*[:\n]+)/i, "")
+      .replace(/^(here(?:'s| is)[^\n:]*:\s*)/i, "")
+      .replace(/^(sure[,!]?\s*here[^\n:]*:\s*)/i, "")
+      .replace(/^(below is[^\n:]*:\s*)/i, "")
+      .replace(/^(here are[^\n:]*:\s*)/i, "")
       .replace(/^(rewritten[^:\n]*[:\n]+)/i, "")
-      .replace(/^(sure[,!]?\s*here[^\n]*\n)/i, "")
       .trim();
 
     // Minor post-processing just for basic humanization
