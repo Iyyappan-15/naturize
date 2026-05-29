@@ -52,13 +52,12 @@ CORE REWRITE RULES (CRITICAL FOR BYPASSING DETECTORS):
 - Randomly mix single-sentence paragraphs with longer paragraphs. Never use uniformly sized blocks of text.
 
 4. EXTREMELY SIMPLE VOCABULARY
-- Use simple, everyday words. Prefer common vocabulary over complex jargon.
+- Use simple, everyday words (5th-grade reading level). Prefer common vocabulary over complex jargon.
 - If a 10-year-old wouldn't use the word, find a simpler alternative (unless it's a technical domain term).
 
-5. REMOVE AI FINGERPRINTS
-Avoid or replace phrases like:
-- Furthermore, Moreover, Additionally, In conclusion, Ultimately
-- Delve, Leverage, Seamless, Transformative, Tapestry
+5. REMOVE AI FINGERPRINTS & STRICT PUNCTUATION
+- Avoid or replace phrases like: Furthermore, Moreover, Additionally, In conclusion, Ultimately, Delve, Leverage, Seamless, Transformative, Tapestry.
+- STRICTLY remove all Oxford commas. Never use a comma before "and" or "or" in a list (e.g. use "apples, oranges and bananas").
 
 6. OUTPUT REQUIREMENTS
 - Preserve all factual information and exact meaning without omitting details.
@@ -163,42 +162,6 @@ Avoid or replace phrases like:
     result = result.replace(/\bcannot\b/g, "can't");
     result = result.replace(/\bit is\b/g, "it's");
     
-    // SECONDARY QUALITY PASS (Llama-3.1-8b)
-    const secondarySys = `You are a strict editor. Your job is to read the provided text and do ONLY three things:
-1. Simplify any overly complex or "corporate" words into simple, everyday 5th-grade vocabulary.
-2. STRICTLY remove all Oxford commas. Never use a comma before "and" or "or" in a list.
-3. Ensure the text flows naturally like a real human wrote it.
-Output ONLY the final polished text, nothing else.`;
-
-    const secondaryUser = `Edit this text:\n\n${result}`;
-    
-    try {
-      const qPass = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${groqKey.trim()}`
-        },
-        body: JSON.stringify({
-          model: "llama-3.1-8b-instant",
-          messages: [
-            { role: "system", content: secondarySys },
-            { role: "user", content: secondaryUser }
-          ],
-          temperature: 0.2, // lowered temperature for stricter formatting adherence
-          max_tokens: 3000
-        }),
-      });
-      if (qPass.ok) {
-        const qData = await qPass.json();
-        const qResult = qData?.choices?.[0]?.message?.content?.trim();
-        if (qResult && qResult.length > 10) {
-          result = qResult;
-        }
-      }
-    } catch(e) {
-      console.error("Secondary pass failed, using primary result.", e);
-    }
 
     // STRICT REGEX COMMA CLEANUP (Runs AFTER secondary pass to guarantee removal)
     // Remove comma before 'and'
