@@ -94,8 +94,7 @@ Your writing rules (follow strictly):
         { role: "system", content: systemMessage },
         { role: "user", content: userMessage }
       ],
-      temperature: 0.85, // Lower slightly to prevent hallucination given high top_p
-      top_p: 0.99,       // BUG FIX: Allow the model to actually sample unpredictable words
+      temperature: 0.85, 
       max_tokens: 3000,
       frequency_penalty: 0.9,
       presence_penalty: 0.7,
