@@ -224,7 +224,27 @@ Your writing rules (follow strictly):
       [/\bin summary,?\s*/gi, ""],
       [/\bultimately,?\s*/gi, ""],
       [/\bsubsequently,?\s*/gi, "then "],
-      [/\bconsequently,?\s*/gi, "so "],
+      // Specific flagged phrases from the screenshot & common AI filler
+      [/has made progress in recent years/gi, "has gotten a lot better lately"],
+      [/has made some significant strides in recent years/gi, "has gotten a lot better lately"],
+      [/is a type of artificial intelligence that can/gi, "is basically tech that can"],
+      [/This is especially true for/gi, "You really see this in"],
+      [/Traditionally[, ]?artists had to/gi, "Before, artists had to"],
+      [/generate synthetic data to train other AI models/gi, "create fake data to train other models"],
+      [/making the creative process more accessible to a wider range of people/gi, "letting more people be creative"],
+      [/making sure that it's used in a way that benefits everyone/gi, "making sure it actually helps people"],
+      [/potential risks associated with this technology/gi, "the real risks this technology carries"],
+      [/increasing(ly)? sophisticated/gi, "getting more advanced"],
+      [/delve into/gi, "look into"],
+      [/It's important to note that/gi, "Keep in mind that"],
+      [/It is important to note that/gi, "Keep in mind that"],
+      [/In conclusion[,]?/gi, ""],
+      [/To summarize[,]?/gi, ""],
+      [/Overall[,]?/gi, ""],
+      [/Ultimately[,]?/gi, "In the end,"],
+      [/It goes without saying that/gi, "Obviously,"],
+      [/As a language model/gi, "As an AI"],
+      [/The implications of this technology are profound/gi, "This tech changes a lot of things"],
     ];
 
     for (const [pattern, replacement] of replacements) {
