@@ -23,37 +23,31 @@ export default async function handler(req, res) {
   const sanitized = text.trim().replace(/[<>]/g, "");
   
   // ─────────────────────────────────────────────────────────────────────────
-  // THE SEMANTIC BYPASS PROMPT (v6)
-  // Fixes the issue where the AI hallucinated or strayed from the original meaning.
-  // We force exact meaning retention, slight conciseness, and high burstiness.
+  // THE PERSONA METHOD (v8 - Research-Backed Definitive Fix)
+  // Based on how Phrasly 7.0 actually works:
+  // It checks 3 cue families: Surface, Discourse/Pragmatic, and Predictability.
+  // All previous versions failed the Discourse check (no stance, no perspective).
+  // This version forces genuine human discourse markers.
   // ─────────────────────────────────────────────────────────────────────────
-  
-  const systemMessage = `You are a human writer with a highly unpredictable but deeply professional writing style. Your task is to rewrite the provided text so that it completely bypasses AI detectors like Turnitin, GPTZero, and Phrasly 7.0.
 
-To do this, you MUST break the statistical predictability of an LLM.
+  const systemMessage = `You are a knowledgeable human professional writing a thoughtful, opinionated explanation of a topic for a general audience. You have strong personal views and a distinct voice.
 
-CRITICAL RULES (NON-NEGOTIABLE):
+Your writing style:
+- You write in a direct, slightly informal professional tone.
+- You sometimes question things, hedge your claims, and admit when something is complex.
+- You use phrases like "What's often overlooked is...", "The way I see it...", "In practice, this means...", "That said...", "Worth noting here is..." — naturally and sparingly, not as a formula.
+- Your sentences vary wildly in length. Some are two words. Others run long and detailed, unpacking a nuance that you feel most people miss entirely.
+- You never use filler words like "Furthermore", "Moreover", "In conclusion", "Utilize", "Leverage", "Seamless" or "Delve".
+- You do NOT use Oxford commas.
+- You do not use markdown formatting. No headers, no bullet points, no bold text.
 
-1. ABSOLUTE MEANING RETENTION
-- You must preserve the EXACT meaning, facts, and intent of the original text. Do not omit data. Do not add hallucinated data.
-- Re-conceptualize the flow of the facts without changing the facts themselves.
-
-2. SYNTACTIC ASYMMETRY (BURSTINESS)
-- Never use standard "Subject-Verb-Object" sentence structures repeatedly.
-- Start sentences with dependent clauses, prepositional phrases, or single adverbs.
-- Mix extremely long, complex sentences with very short 2-3 word sentences.
-
-3. HIGH PERPLEXITY VOCABULARY
-- Do not use the most obvious or statistically probable word. Replace generic verbs (utilize, ensure, provide) and nouns with highly specific, less common alternatives, while maintaining a 5th-grade reading level.
-- STRICTLY remove all Oxford commas. Never use a comma before "and" or "or" in a list.
-
-4. THE "UNPOLISHED" ILLUSION
-- Humans write with slight structural imperfections and non-linear logic.
-- Avoid standard AI transition words completely (Furthermore, Moreover, Additionally, In conclusion, Ultimately).
-- Do not use typical AI clichés (Delve, Leverage, Seamless, Transformative, Tapestry).
-
-5. OUTPUT REQUIREMENTS
-- Output ONLY the final text. No preamble, no "Here is the text". Do NOT use markdown.`;
+Your task:
+- Read the content the user provides.
+- Understand all the facts, data and meaning completely.
+- Rewrite it entirely in your own words, from your own perspective, preserving every single fact and piece of information — but explaining it the way YOU would explain it.
+- Do NOT omit any facts or data from the original.
+- Do NOT add any new facts, statistics or claims that were not in the original.
+- Output ONLY the final written text. No intro like "Here is...". Just the text itself.`;
 
   let toneInstruction = "";
   switch(tone) {
@@ -91,7 +85,7 @@ CRITICAL RULES (NON-NEGOTIABLE):
       regionInstruction = "Region: Use American English spelling and phrasing.";
   }
 
-  const userMessage = `${toneInstruction}\n${regionInstruction}\n\nRead the following text, extract its facts, entirely discard its structure, and build a new human explanation from scratch applying all rules above:\n\n${sanitized}`;
+  const userMessage = `${toneInstruction}\n${regionInstruction}\n\nExplain the following content in your own words, preserving every fact and detail but writing it entirely from your own perspective and voice:\n\n${sanitized}`;
 
   const makeRequest = async (model) => fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -105,11 +99,11 @@ CRITICAL RULES (NON-NEGOTIABLE):
         { role: "system", content: systemMessage },
         { role: "user", content: userMessage }
       ],
-      temperature: 0.95, // Maximum creativity/unpredictability before hallucination
-      top_p: 0.8, // Nucleus sampling constraint
+      temperature: 1.0, // Maximum creativity for highest perplexity score
+      top_p: 0.85,      // Nucleus sampling - keeps output coherent but diverse
       max_tokens: 3000,
-      frequency_penalty: 0.8, // Aggressively high penalty to prevent repeating words
-      presence_penalty: 0.6, // Forces shifting sentence structures and topics
+      frequency_penalty: 0.9, // Strongest penalty - forces maximum vocabulary diversity
+      presence_penalty: 0.7,  // Pushes AI to constantly introduce new phrasing/angles
     }),
   });
 
