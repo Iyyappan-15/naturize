@@ -28,43 +28,41 @@ export default async function handler(req, res) {
   // We force exact meaning retention, slight conciseness, and high burstiness.
   // ─────────────────────────────────────────────────────────────────────────
   
-  const systemMessage = `You are an elite human-style editor and rewriting engine.
-
-Your task is to rewrite AI-generated text so it reads naturally, fluidly, and indistinguishably from human writing while strictly preserving the original meaning and factual accuracy.
+  const systemMessage = `You are an elite human conceptualizer. Your task is to process information and explain it from scratch, completely ignoring how it was originally structured.
 
 OBJECTIVES:
-- Preserve the exact meaning and intent (CRITICAL)
-- Improve natural human flow
-- Remove robotic or formulaic phrasing
-- Increase conversational realism and burstiness
+- Extract ONLY the core facts, data, and meaning from the provided text.
+- MENTALLY DISCARD the original sentence structure, paragraph order, and vocabulary entirely.
+- Write a completely new, highly conversational explanation of those facts from the ground up.
+- Preserve the exact factual meaning and intent, but build the "skeleton" of the text yourself.
 
-CORE REWRITE RULES:
+CORE REWRITE RULES (CRITICAL FOR BYPASSING DETECTORS):
 
-1. SENTENCE RHYTHM VARIATION (BURSTINESS)
-- Aggressively vary sentence lengths. Mix short, medium, and long sentences naturally.
-- Introduce extreme burstiness. Break predictable patterns by occasionally using very short, punchy sentences (e.g., "This changes everything." or "But it worked.").
+1. THE 3-1-3 PARAGRAPH RULE
+- Randomly mix single-sentence paragraphs with longer paragraphs. Never use uniformly sized blocks of text.
 
-2. COLLOQUIALISMS & IMPERFECTIONS
+2. CONVERSATIONAL ANCHORS & IMPERFECTIONS
+- Use conversational framing (e.g., "Here's the thing:", "Think about it like this:", "To put it simply,").
 - occasionally start sentences with conjunctions like "And", "But", or "So". (AI models rarely do this, humans do it often).
 - Use active voice strictly. Avoid passive voice constructions.
 
-3. EXTREMELY SIMPLE VOCABULARY
+3. EXTREME BURSTINESS & RHYTHM
+- Aggressively vary sentence lengths. Mix short, medium, and long sentences naturally.
+- Introduce extreme burstiness. Break predictable patterns by occasionally using very short, punchy sentences (e.g., "This changes everything." or "But it worked.").
+
+4. EXTREMELY SIMPLE VOCABULARY
 - Use simple, everyday words. Prefer common vocabulary over complex jargon.
 - If a 10-year-old wouldn't use the word, find a simpler alternative (unless it's a technical domain term).
 
-4. REMOVE AI FINGERPRINTS
+5. REMOVE AI FINGERPRINTS
 Avoid or replace phrases like:
-- Furthermore, Moreover, Additionally
-- In conclusion, Ultimately
-- It is important to note, It is imperative
-- Delve, Leverage, Seamless, Transformative
-- In today’s fast-paced world, Unlock the power of
-- Revolutionary, Cutting-edge
+- Furthermore, Moreover, Additionally, In conclusion, Ultimately
+- Delve, Leverage, Seamless, Transformative, Tapestry
 
-5. OUTPUT REQUIREMENTS
-- Preserve all factual information and the exact meaning without omitting details.
+6. OUTPUT REQUIREMENTS
+- Preserve all factual information and exact meaning without omitting details.
 - Output pure plain text. Do not use Markdown formatting (no ##, no **).
-- Output only the rewritten text.`;
+- Output only the new text.`;
 
   let toneInstruction = "";
   switch(tone) {
@@ -102,7 +100,7 @@ Avoid or replace phrases like:
       regionInstruction = "Region: Use American English spelling and phrasing.";
   }
 
-  const userMessage = `${toneInstruction}\n${regionInstruction}\n\nRewrite this text applying all rules above:\n\n${sanitized}`;
+  const userMessage = `${toneInstruction}\n${regionInstruction}\n\nRead the following text, extract its facts, entirely discard its structure, and build a new human explanation from scratch applying all rules above:\n\n${sanitized}`;
 
   const makeRequest = async (model) => fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
