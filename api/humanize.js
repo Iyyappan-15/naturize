@@ -23,21 +23,21 @@ export default async function handler(req, res) {
   const sanitized = text.trim().replace(/[<>]/g, "");
   
   // ─────────────────────────────────────────────────────────────────────────
-  // THE CONSTRAINT-BASED ANTI-BOILERPLATE METHOD (v10)
-  // Replaces the "Persona" method. AI models default to "Academic Boilerplate"
-  // when explaining concepts. This prompt heavily constrains vocabulary to
-  // plain English and bans the abstract nouns that detectors use as flags.
+  // THE PERSONA METHOD (v9 - Definitive Fix)
+  // Research shows Phrasly 7.0 checks 3 cue families:
+  // 1. Surface cues (word choice), 2. Discourse/Pragmatic cues (stance, hedging),
+  // 3. Predictability cues (perplexity/burstiness).
+  // Previous prompts failed the Discourse check — no personal stance.
+  // This version + the JS post-processor below covers all 3.
   // ─────────────────────────────────────────────────────────────────────────
 
-  const systemMessage = `You are a human writer drafting a simple, plain-English explanation based on the provided notes.
+  const systemMessage = `You are a human writer drafting a completely original article based on the provided notes.
 
 Your writing rules (follow strictly):
-- PLAIN ENGLISH ONLY: Write at a 7th-grade reading level.
-- BAN ON ABSTRACT NOUNS: You are strictly forbidden from using abstract academic nouns. Do NOT use words like: implications, dynamics, phenomena, paradigm, framework, perceptions, abilities, qualities.
-- BAN ON COMPOUND ACADEMIC ADJECTIVES: Do NOT use phrases like "profound impact", "complex and evolving", "behavioral dynamics".
-- Use concrete, physical nouns and simple verbs. Explain things as if talking to a bright teenager.
-- Ban on long lists: NEVER write a list of 3 or more items. Maximum of two examples per sentence.
-- Vary sentence length, but ensure every sentence is grammatically complete (has a subject and verb).
+- Do NOT write sentence fragments. Every sentence must have a clear subject and verb.
+- Ban on long lists: AI models love writing lists of 3, 4 or 5 items (e.g., "A, B, C, D and E"). You are strictly forbidden from doing this. If you need to list things, name a maximum of two examples and move on. NEVER write a list of 3 or more items.
+- Information Spacing: Do not pack every sentence with dense facts. Spread the information out naturally across multiple sentences.
+- Vary sentence length drastically, but keep it grammatically correct.
 - Avoid all of these words entirely: undeniable, crucial, significant, sophisticated, nuanced, comprehensive, multifaceted, paramount, imperative, substantial, innovative, robust, cutting-edge, streamline, foster, facilitate, enhance, ensure, demonstrate, utilize, leverage, delve, seamless, transformative, tapestry, furthermore, moreover, additionally, in conclusion, ultimately.
 - Replace those words with plain everyday equivalents.
 - Do NOT use Oxford commas.
@@ -94,7 +94,8 @@ Your writing rules (follow strictly):
         { role: "system", content: systemMessage },
         { role: "user", content: userMessage }
       ],
-      temperature: 0.85, 
+      temperature: 1.0,
+      top_p: 0.85,
       max_tokens: 3000,
       frequency_penalty: 0.9,
       presence_penalty: 0.7,
@@ -244,21 +245,6 @@ Your writing rules (follow strictly):
       [/It goes without saying that/gi, "Obviously,"],
       [/As a language model/gi, "As an AI"],
       [/The implications of this technology are profound/gi, "This tech changes a lot of things"],
-      // Academic Boilerplate from latest tests
-      [/profound impact/gi, "huge effect"],
-      [/attribute human-like qualities/gi, "treat them like people"],
-      [/phenomenon is likely to become even more pronounced/gi, "will just happen more"],
-      [/become even more pronounced/gi, "happen even more"],
-      [/psychological and behavioral dynamics/gi, "how people act and feel"],
-      [/gain a deeper understanding/gi, "learn more"],
-      [/implications it may have for our culture and society/gi, "how it might change our world"],
-      [/implications it may have/gi, "how it might change things"],
-      [/new collection of research papers brings together some of the latest findings/gi, "Recent studies show"],
-      [/offering insights into the complex and evolving relationship/gi, "showing how we connect"],
-      [/complex and evolving relationship/gi, "changing connection"],
-      [/potential benefits and challenges/gi, "good and bad sides"],
-      [/shape our lives in the years to come/gi, "change our future"],
-      [/examining the ways in which/gi, "looking at how"],
     ];
 
     for (const [pattern, replacement] of replacements) {
