@@ -254,25 +254,31 @@ ${input}
 """`;
 
   try {
-    const apiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const makeRequest = async (modelName) => fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${groqKey.trim()}`
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: modelName,
         messages: [{ role: "user", content: prompt }],
         temperature: 0,
-        max_tokens: 900,
-        response_format: { type: "json_object" }
+        max_tokens: 900
       })
     });
+
+    let apiRes = await makeRequest("llama-3.3-70b-versatile");
+
+    if (!apiRes.ok) {
+      // Fallback to smaller model if 70b is rate limited or errors
+      apiRes = await makeRequest("llama-3.1-8b-instant");
+    }
 
     if (!apiRes.ok) {
       const errText = await apiRes.text();
       console.error("Groq API error:", errText);
-      throw new Error("API error");
+      throw new Error(errText);
     }
 
     const data = await apiRes.json();
