@@ -238,6 +238,15 @@ Your writing rules (follow strictly):
     // ── STAGE 5: Clean up double spaces / blank lines from removed words ───────
     result = result.replace(/  +/g, " ").replace(/\n {2,}/g, "\n").trim();
 
+    // ── STAGE 6: Sentence-Level Structural Surgery ───────────────────────────
+    // Root cause fix: Phrasly 7.0 runs a per-sentence classifier.
+    // Long, grammatically perfect sentences = AI regardless of word choice.
+    // This stage breaks long sentences and injects human structural patterns.
+    result = injectHumanStructure(result);
+
+    // ── STAGE 7: Final whitespace cleanup ─────────────────────────────────────
+    result = result.replace(/  +/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+
     // Estimate score
     const humanityScore = estimateHumanityScore(result);
 
@@ -249,13 +258,103 @@ Your writing rules (follow strictly):
   }
 }
 
+// ── Sentence-Level Structural Surgery ────────────────────────────────────────
+// Breaks long AI sentences (>20 words) into 2 shorter ones at clause boundaries.
+// Injects informal hedge starters to ~1 in 3 non-opening sentences.
+// Converts some mid-sentence commas to em-dashes for human rhythm.
+function injectHumanStructure(text) {
+  const hedgeStarters = [
+    "Honestly, ", "Basically, ", "Actually, ", "The thing is, ",
+    "In practice, ", "Truth be told, ", "To be fair, ", "Look — ",
+    "Here's what I mean — ", "And honestly, "
+  ];
+
+  const paragraphs = text.split(/\n\n+/);
+  let hedgeCounter = 0;
+
+  const processed = paragraphs.map((para, pIdx) => {
+    // Split into sentences
+    const sentences = para.match(/[^.!?]+[.!?]+["']?/g) || [para];
+
+    const newSents = sentences.flatMap((sent, sIdx) => {
+      const trimmed = sent.trim();
+      const words = trimmed.split(/\s+/);
+
+      // ── Rule A: Break very long sentences (>20 words) at a clause boundary ──
+      if (words.length > 20) {
+        const midStart = Math.floor(words.length * 0.35);
+        const midEnd   = Math.floor(words.length * 0.65);
+
+        for (let i = midStart; i <= midEnd; i++) {
+          const w = words[i];
+          if (!w) continue;
+
+          // Break on ", which", ", where", ", and", ", but", ", so"
+          if (w === 'which,' || w === 'where,' || w === 'but,' ||
+              (words[i - 1] === ',' && (w === 'which' || w === 'where' || w === 'but' || w === 'so' || w === 'and'))) {
+            const part1words = words.slice(0, i).join(' ');
+            const part1 = part1words.replace(/,+$/, '').trim() + '.';
+            const rest = words.slice(i);
+            // Drop leading conjunctions at the start of part2 for cleaner read
+            if (['which', 'where', 'and', 'but', 'so'].includes(rest[0]?.toLowerCase())) {
+              rest.shift();
+            }
+            if (rest.length > 2) {
+              rest[0] = rest[0].charAt(0).toUpperCase() + rest[0].slice(1);
+              const part2 = rest.join(' ');
+              return [part1, part2];
+            }
+          }
+
+          // Break on comma at midpoint if sentence is very long (>28 words)
+          if (words.length > 28 && w && w.endsWith(',')) {
+            const part1 = words.slice(0, i + 1).join(' ').replace(/,$/, '').trim() + '.';
+            const rest = words.slice(i + 1);
+            if (rest.length > 3) {
+              rest[0] = rest[0].charAt(0).toUpperCase() + rest[0].slice(1);
+              return [part1, rest.join(' ')];
+            }
+          }
+        }
+      }
+
+      // ── Rule B: Em-dash injection for medium sentences (12-20 words) ──────────
+      if (words.length >= 12 && words.length <= 20) {
+        // Find a comma around the 40-60% mark and replace with em-dash
+        const target = Math.floor(words.length * 0.45);
+        if (words[target] && words[target].endsWith(',')) {
+          words[target] = words[target].slice(0, -1) + ' —';
+          return [words.join(' ')];
+        }
+      }
+
+      return [trimmed];
+    });
+
+    // ── Rule C: Add informal hedge to first sentence of every 3rd paragraph ────
+    if (pIdx > 0 && pIdx % 3 === 2 && newSents.length > 0) {
+      const hedge = hedgeStarters[hedgeCounter % hedgeStarters.length];
+      hedgeCounter++;
+      const first = newSents[0];
+      // Don't re-hedge sentences that already start with a hedge
+      const alreadyHedged = hedgeStarters.some(h => first.startsWith(h.trim()));
+      if (!alreadyHedged && first.length > 10) {
+        newSents[0] = hedge + first.charAt(0).toLowerCase() + first.slice(1);
+      }
+    }
+
+    return newSents.join(' ');
+  });
+
+  return processed.join('\n\n');
+}
+
 function estimateHumanityScore(text) {
   const sentences = text.match(/[^.!?\n]+[.!?]+/g) || [text];
   const lens = sentences.map(s => s.trim().split(/\s+/).length);
   const avg = lens.reduce((a, b) => a + b, 0) / (lens.length || 1);
   const variance = lens.reduce((s, l) => s + Math.pow(l - avg, 2), 0) / (lens.length || 1);
   const burstiness = avg > 0 ? Math.sqrt(variance) / avg : 0;
-  
   let score = 75 + Math.min(20, burstiness * 30);
   return Math.min(99, Math.max(50, Math.round(score)));
 }
