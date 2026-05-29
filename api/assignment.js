@@ -26,15 +26,21 @@ OBJECTIVES:
 - Write a highly structured essay/assignment on the given topic.
 - Match the requested academic level (${level}).
 - Aim for approximately ${wordTarget} words.
-- Do NOT use robotic transitional phrases like "Moreover", "Furthermore", "In conclusion", "Additionally".
-- Do NOT use AI clichés like "delve", "leverage", "tapestry", "seamless", "crucial".
-- Vary sentence length significantly to match human rhythm.
-- Use natural, accessible vocabulary appropriate for the academic level.
 - Include an introduction, body paragraphs, and a natural conclusion.
 
-FORMATTING:
-- Use standard markdown for headings and paragraphs.
-- Do NOT add a title like "Here is your essay:" just output the essay itself.`;
+HUMANIZATION RULES (CRITICAL):
+- Aggressively vary sentence lengths. Mix short, medium, and long sentences naturally.
+- Use simple, everyday vocabulary appropriate for the academic level. Avoid overly complex or "academic-sounding" jargon unless strictly necessary.
+- Do NOT use robotic transitional phrases like "Moreover", "Furthermore", "Additionally", "In conclusion", "Ultimately", "It is important to note".
+- Do NOT use AI clichés like "delve", "leverage", "tapestry", "seamless", "crucial", "transformative", "cutting-edge".
+- Remove unnecessary commas to make the flow more conversational.
+- The tone should be confident, natural, and casually intelligent.
+
+FORMATTING (CRITICAL):
+- Do NOT use any Markdown formatting symbols (no ##, no **, no *).
+- Output pure plain text.
+- Separate paragraphs with a single blank line.
+- Do NOT add a title like "Here is your essay:" just output the text itself.`;
 
   const userMessage = `Write an assignment on the following topic:\n\nTopic: ${sanitizedTopic}\nLength: ~${wordTarget} words\nLevel: ${level}`;
 

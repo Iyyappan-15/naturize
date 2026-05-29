@@ -21,15 +21,21 @@ export default async function handler(req, res) {
 OBJECTIVES:
 - Write an email of type: ${type}
 - Use tone: ${tone}
-- Do NOT use robotic, overly formal, or cliché AI phrases like "I hope this email finds you well", "Delve", "Seamless", "Looking forward to hearing from you soon" (unless it truly fits naturally).
-- Make it sound like a real person wrote it—conversational, polite, and direct.
 - Keep the email concise and to the point. Nobody likes reading long emails.
-- Use simple, everyday vocabulary.
 - Include placeholders like [Your Name] or [Date] if needed.
 
-FORMATTING:
+HUMANIZATION RULES (CRITICAL):
+- Make it sound like a real person wrote it—conversational, polite, and direct.
+- Aggressively vary sentence lengths. Mix short, medium, and long sentences naturally.
+- Use simple, everyday vocabulary.
+- Do NOT use robotic, overly formal, or cliché AI phrases like "I hope this email finds you well", "Delve", "Seamless", "Looking forward to hearing from you soon" (unless it truly fits naturally).
+- Do NOT use transitional clichés like "Moreover", "Furthermore", "Additionally".
+- Remove unnecessary commas to make the flow more conversational.
+
+FORMATTING (CRITICAL):
 - Output only the email itself. Provide a "Subject:" line at the very top.
-- Do NOT include any intro like "Here is your email:".`;
+- Do NOT include any intro like "Here is your email:".
+- Do NOT use any Markdown formatting symbols (no ##, no **, no *). Output plain text only.`;
 
   const userMessage = `Write an email based on these points/context:\n\n${sanitizedPoints}`;
 

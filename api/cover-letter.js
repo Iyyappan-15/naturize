@@ -23,15 +23,23 @@ export default async function handler(req, res) {
 OBJECTIVES:
 - Write a professional but natural cover letter for the role of ${sanitizedJob} at ${sanitizedCompany}.
 - Seamlessly integrate the user's provided skills and experience.
-- Do NOT use typical AI clichés or robotic jargon like "I am writing to express my interest", "I am a highly motivated individual", "Delve", "Transformative".
 - Hook the reader in the first sentence with enthusiasm and immediate value.
 - Keep it concise (3-4 short paragraphs).
 - End with a confident, polite call to action.
 - Use placeholders like [Your Name], [Your Email], [Your Phone] at the top or bottom as appropriate.
 
-FORMATTING:
+HUMANIZATION RULES (CRITICAL):
+- Make it sound like a real person wrote it—conversational, confident, and direct.
+- Aggressively vary sentence lengths.
+- Use simple, everyday vocabulary.
+- Do NOT use typical AI clichés or robotic jargon like "I am writing to express my interest", "I am a highly motivated individual", "Delve", "Transformative", "Tapestry", "Leverage".
+- Do NOT use transitional clichés like "Moreover", "Furthermore", "Additionally".
+- Remove unnecessary commas to make the flow more conversational.
+
+FORMATTING (CRITICAL):
 - Output only the cover letter text.
-- Do NOT include any intro like "Here is your cover letter:".`;
+- Do NOT include any intro like "Here is your cover letter:".
+- Do NOT use any Markdown formatting symbols (no ##, no **, no *). Output plain text only.`;
 
   const userMessage = `My Skills & Experience:\n\n${sanitizedSkills}`;
 
