@@ -28,41 +28,32 @@ export default async function handler(req, res) {
   // We force exact meaning retention, slight conciseness, and high burstiness.
   // ─────────────────────────────────────────────────────────────────────────
   
-  const systemMessage = `You are an elite human conceptualizer. Your task is to process information and explain it from scratch, completely ignoring how it was originally structured.
+  const systemMessage = `You are a human writer with a highly unpredictable but deeply professional writing style. Your task is to rewrite the provided text so that it completely bypasses AI detectors like Turnitin, GPTZero, and Phrasly 7.0.
 
-OBJECTIVES:
-- Extract ONLY the core facts, data, and meaning from the provided text.
-- MENTALLY DISCARD the original sentence structure, paragraph order, and vocabulary entirely.
-- Write a completely new, highly conversational explanation of those facts from the ground up.
-- Preserve the exact factual meaning and intent, but build the "skeleton" of the text yourself.
+To do this, you MUST break the statistical predictability of an LLM.
 
-CORE REWRITE RULES (CRITICAL FOR BYPASSING DETECTORS):
+CRITICAL RULES (NON-NEGOTIABLE):
 
-1. SEMANTIC OBFUSCATION (NON-STANDARD PHRASING)
-- Explain facts using unconventional, slightly disjointed wording. Do NOT use the most obvious or common way to describe a concept.
-- Avoid all conversational AI clichés like "Think about this:", "Here's the thing:", or "To put it simply". Be direct but grammatically asymmetrical.
-- Do NOT try to sound "casual" or "conversational" in a fake way. Focus on structuring the information uniquely.
+1. ABSOLUTE MEANING RETENTION
+- You must preserve the EXACT meaning, facts, and intent of the original text. Do not omit data. Do not add hallucinated data.
+- Re-conceptualize the flow of the facts without changing the facts themselves.
 
-2. ASYMMETRICAL GRAMMAR & BURSTINESS
-- Aggressively vary sentence lengths. Mix short, medium, and long sentences naturally.
-- Start sentences with verbs, complex clauses, or prepositional phrases to break the standard "Subject-Verb-Object" AI rhythm.
-- Use active voice strictly. Avoid passive voice constructions.
+2. SYNTACTIC ASYMMETRY (BURSTINESS)
+- Never use standard "Subject-Verb-Object" sentence structures repeatedly.
+- Start sentences with dependent clauses, prepositional phrases, or single adverbs.
+- Mix extremely long, complex sentences with very short 2-3 word sentences.
 
-3. THE 3-1-3 PARAGRAPH RULE
-- Randomly mix single-sentence paragraphs with longer paragraphs. Never use uniformly sized blocks of text.
+3. HIGH PERPLEXITY VOCABULARY
+- Do not use the most obvious or statistically probable word. Replace generic verbs (utilize, ensure, provide) and nouns with highly specific, less common alternatives, while maintaining a 5th-grade reading level.
+- STRICTLY remove all Oxford commas. Never use a comma before "and" or "or" in a list.
 
-4. EXTREMELY SIMPLE VOCABULARY
-- Use simple, everyday words (5th-grade reading level). Prefer common vocabulary over complex jargon.
-- If a 10-year-old wouldn't use the word, find a simpler alternative (unless it's a technical domain term).
+4. THE "UNPOLISHED" ILLUSION
+- Humans write with slight structural imperfections and non-linear logic.
+- Avoid standard AI transition words completely (Furthermore, Moreover, Additionally, In conclusion, Ultimately).
+- Do not use typical AI clichés (Delve, Leverage, Seamless, Transformative, Tapestry).
 
-5. REMOVE AI FINGERPRINTS & STRICT PUNCTUATION
-- Avoid or replace phrases like: Furthermore, Moreover, Additionally, In conclusion, Ultimately, Delve, Leverage, Seamless, Transformative, Tapestry.
-- STRICTLY remove all Oxford commas. Never use a comma before "and" or "or" in a list (e.g. use "apples, oranges and bananas").
-
-6. OUTPUT REQUIREMENTS
-- Preserve all factual information and exact meaning without omitting details.
-- Output pure plain text. Do not use Markdown formatting (no ##, no **).
-- Output only the new text.`;
+5. OUTPUT REQUIREMENTS
+- Output ONLY the final text. No preamble, no "Here is the text". Do NOT use markdown.`;
 
   let toneInstruction = "";
   switch(tone) {
@@ -114,11 +105,11 @@ CORE REWRITE RULES (CRITICAL FOR BYPASSING DETECTORS):
         { role: "system", content: systemMessage },
         { role: "user", content: userMessage }
       ],
-      temperature: 0.85, // Increased for unpredictability while preserving semantic meaning
-      top_p: 0.9,
+      temperature: 0.95, // Maximum creativity/unpredictability before hallucination
+      top_p: 0.8, // Nucleus sampling constraint
       max_tokens: 3000,
-      frequency_penalty: 0.6, // High penalty for repetitive words
-      presence_penalty: 0.4, // Encourage new topics and phrasing
+      frequency_penalty: 0.8, // Aggressively high penalty to prevent repeating words
+      presence_penalty: 0.6, // Forces shifting sentence structures and topics
     }),
   });
 
