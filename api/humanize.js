@@ -1,6 +1,6 @@
-// /api/humanize.js — Naturize Humanizer v6 (Semantic Bypass Engine)
-// Strategy: Balance high semantic retention (don't lose the meaning) with 
-// high perplexity (unpredictable vocabulary) and concise bursty structures.
+// /api/humanize.js — Naturize Humanizer v9 (Persona Method + JS Post-Processor)
+// Strategy: Persona prompt forces discourse cues. JS pipeline guarantees
+// AI vocabulary is replaced regardless of LLM output. Meaning is always preserved.
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -23,54 +23,49 @@ export default async function handler(req, res) {
   const sanitized = text.trim().replace(/[<>]/g, "");
   
   // ─────────────────────────────────────────────────────────────────────────
-  // THE PERSONA METHOD (v8 - Research-Backed Definitive Fix)
-  // Based on how Phrasly 7.0 actually works:
-  // It checks 3 cue families: Surface, Discourse/Pragmatic, and Predictability.
-  // All previous versions failed the Discourse check (no stance, no perspective).
-  // This version forces genuine human discourse markers.
+  // THE PERSONA METHOD (v9 - Definitive Fix)
+  // Research shows Phrasly 7.0 checks 3 cue families:
+  // 1. Surface cues (word choice), 2. Discourse/Pragmatic cues (stance, hedging),
+  // 3. Predictability cues (perplexity/burstiness).
+  // Previous prompts failed the Discourse check — no personal stance.
+  // This version + the JS post-processor below covers all 3.
   // ─────────────────────────────────────────────────────────────────────────
 
-  const systemMessage = `You are a knowledgeable human professional writing a thoughtful, opinionated explanation of a topic for a general audience. You have strong personal views and a distinct voice.
+  const systemMessage = `You are an experienced human professional explaining a topic to a general audience. You are opinionated, direct and occasionally skeptical.
 
-Your writing style:
-- You write in a direct, slightly informal professional tone.
-- You sometimes question things, hedge your claims, and admit when something is complex.
-- You use phrases like "What's often overlooked is...", "The way I see it...", "In practice, this means...", "That said...", "Worth noting here is..." — naturally and sparingly, not as a formula.
-- Your sentences vary wildly in length. Some are two words. Others run long and detailed, unpacking a nuance that you feel most people miss entirely.
-- You never use filler words like "Furthermore", "Moreover", "In conclusion", "Utilize", "Leverage", "Seamless" or "Delve".
-- You do NOT use Oxford commas.
-- You do not use markdown formatting. No headers, no bullet points, no bold text.
-
-Your task:
-- Read the content the user provides.
-- Understand all the facts, data and meaning completely.
-- Rewrite it entirely in your own words, from your own perspective, preserving every single fact and piece of information — but explaining it the way YOU would explain it.
-- Do NOT omit any facts or data from the original.
-- Do NOT add any new facts, statistics or claims that were not in the original.
-- Output ONLY the final written text. No intro like "Here is...". Just the text itself.`;
+Your writing rules (follow strictly):
+- Write from a first-person perspective where it feels natural. Use "I think", "I'd argue", "in my view" occasionally.
+- Vary sentence length drastically. Write some sentences of 3-5 words. Others can be long and detailed. Never string together sentences of similar length.
+- Never start two consecutive paragraphs the same way.
+- Avoid all of these words entirely: undeniable, crucial, significant, sophisticated, nuanced, comprehensive, multifaceted, paramount, imperative, substantial, innovative, robust, cutting-edge, streamline, foster, facilitate, enhance, ensure, demonstrate, utilize, leverage, delve, seamless, transformative, tapestry, furthermore, moreover, additionally, in conclusion, ultimately.
+- Replace those words with plain everyday equivalents.
+- Do NOT use Oxford commas.
+- No markdown. No headers. No bullet points. No bold.
+- You MUST preserve every fact, data point and meaning from the original. Do not add or remove information.
+- Output only the final text. No "Here is..." intro.`;
 
   let toneInstruction = "";
   switch(tone) {
     case "academic":
-      toneInstruction = "Tone: Academic but accessible. Keep the scholarly meaning, but remove the dense jargon. Explain it clearly.";
+      toneInstruction = "Tone: Keep it scholarly but readable — lose the dense jargon, keep the intellectual depth.";
       break;
     case "casual":
-      toneInstruction = "Tone: Casual and relaxed. Write like you are speaking directly to a colleague. Use everyday language.";
+      toneInstruction = "Tone: Casual and direct, like explaining to a friend over coffee.";
       break;
     case "creative":
-      toneInstruction = "Tone: Creative and engaging. Use active verbs and strong nouns to keep the reader interested.";
+      toneInstruction = "Tone: Vivid and engaging. Use strong, specific verbs and unexpected comparisons.";
       break;
     case "formal":
-      toneInstruction = "Tone: Formal and direct. Strip out all corporate fluff. Be clear, polite, and authoritative.";
+      toneInstruction = "Tone: Formal and authoritative but never robotic. Clear and direct.";
       break;
     default:
-      toneInstruction = "Tone: Professional and clear. Accessible, everyday professional English.";
+      toneInstruction = "Tone: Clear, direct, professional but human.";
   }
 
   let regionInstruction = "";
   switch(region) {
     case "UK":
-      regionInstruction = "Region: Use British English spelling (e.g., colour, organise) and phrasing.";
+      regionInstruction = "Region: Use British English spelling and phrasing.";
       break;
     case "AU":
       regionInstruction = "Region: Use Australian English spelling and phrasing.";
@@ -82,10 +77,10 @@ Your task:
       regionInstruction = "Region: Use Indian English phrasing and conventions.";
       break;
     default:
-      regionInstruction = "Region: Use American English spelling and phrasing.";
+      regionInstruction = "Region: American English.";
   }
 
-  const userMessage = `${toneInstruction}\n${regionInstruction}\n\nExplain the following content in your own words, preserving every fact and detail but writing it entirely from your own perspective and voice:\n\n${sanitized}`;
+  const userMessage = `${toneInstruction}\n${regionInstruction}\n\nRewrite the following in your own voice. Keep every fact intact. Make it sound like a real person wrote it:\n\n${sanitized}`;
 
   const makeRequest = async (model) => fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -99,11 +94,11 @@ Your task:
         { role: "system", content: systemMessage },
         { role: "user", content: userMessage }
       ],
-      temperature: 1.0, // Maximum creativity for highest perplexity score
-      top_p: 0.85,      // Nucleus sampling - keeps output coherent but diverse
+      temperature: 1.0,
+      top_p: 0.85,
       max_tokens: 3000,
-      frequency_penalty: 0.9, // Strongest penalty - forces maximum vocabulary diversity
-      presence_penalty: 0.7,  // Pushes AI to constantly introduce new phrasing/angles
+      frequency_penalty: 0.9,
+      presence_penalty: 0.7,
     }),
   });
 
@@ -131,7 +126,7 @@ Your task:
     if (!rawOutput.trim())
       return res.status(502).json({ error: "Empty response from AI. Please try again." });
 
-    // Draconian Preamble Cleanup
+    // ── STAGE 1: Strip AI preambles ──────────────────────────────────────────
     rawOutput = rawOutput
       .replace(/^(here(?:'s| is)[^\n:]*:\s*)/i, "")
       .replace(/^(sure[,!]?\s*here[^\n:]*:\s*)/i, "")
@@ -140,23 +135,108 @@ Your task:
       .replace(/^(rewritten[^:\n]*[:\n]+)/i, "")
       .trim();
 
-    // Minor post-processing just for basic humanization
+    // ── STAGE 2: Contraction injection ───────────────────────────────────────
     let result = rawOutput;
     result = result.replace(/\bI am\b/g, "I'm");
     result = result.replace(/\bdo not\b/g, "don't");
     result = result.replace(/\bcannot\b/g, "can't");
+    result = result.replace(/\bwill not\b/g, "won't");
     result = result.replace(/\bit is\b/g, "it's");
-    
+    result = result.replace(/\bthey are\b/g, "they're");
+    result = result.replace(/\bwe are\b/g, "we're");
+    result = result.replace(/\bthere is\b/g, "there's");
+    result = result.replace(/\bthat is\b/g, "that's");
+    result = result.replace(/\bwhat is\b/g, "what's");
+    result = result.replace(/\byou are\b/g, "you're");
+    result = result.replace(/\bhe is\b/g, "he's");
+    result = result.replace(/\bshe is\b/g, "she's");
 
-    // STRICT REGEX COMMA CLEANUP (Runs AFTER secondary pass to guarantee removal)
-    // Remove comma before 'and'
+    // ── STAGE 3: AI Vocabulary Replacement Engine ─────────────────────────────
+    // These are the exact words Phrasly 7.0 flags. We force-replace them
+    // regardless of what the LLM outputs — guaranteed, not prompt-based.
+    const replacements = [
+      // Overused AI adjectives
+      [/\bundeniable\b/gi, "clear"],
+      [/\bundeniably\b/gi, "clearly"],
+      [/\bcrucial\b/gi, "important"],
+      [/\bparamount\b/gi, "critical"],
+      [/\bimperative\b/gi, "necessary"],
+      [/\bsignificantly\b/gi, "noticeably"],
+      [/\bsignificant\b/gi, "real"],
+      [/\bsubstantially\b/gi, "considerably"],
+      [/\bsubstantial\b/gi, "large"],
+      [/\bincreasingly\b/gi, "more and more"],
+      [/\bsophisticated\b/gi, "advanced"],
+      [/\bcomprehensive\b/gi, "thorough"],
+      [/\bmultifaceted\b/gi, "complex"],
+      [/\binnovative\b/gi, "new"],
+      [/\brobust\b/gi, "strong"],
+      [/\bcutting-edge\b/gi, "latest"],
+      [/\bcutting edge\b/gi, "latest"],
+      [/\bnuanced\b/gi, "detailed"],
+      // Overused AI verbs
+      [/\butilizes\b/gi, "uses"],
+      [/\butilized\b/gi, "used"],
+      [/\butilizing\b/gi, "using"],
+      [/\butilize\b/gi, "use"],
+      [/\bleverages\b/gi, "uses"],
+      [/\bleveraged\b/gi, "used"],
+      [/\bleveraging\b/gi, "using"],
+      [/\bleverage\b/gi, "use"],
+      [/\bfacilitates\b/gi, "helps"],
+      [/\bfacilitated\b/gi, "helped"],
+      [/\bfacilitating\b/gi, "helping"],
+      [/\bfacilitate\b/gi, "help"],
+      [/\bdemonstrates\b/gi, "shows"],
+      [/\bdemonstrated\b/gi, "showed"],
+      [/\bdemonstrating\b/gi, "showing"],
+      [/\bdemonstrate\b/gi, "show"],
+      [/\benhances\b/gi, "improves"],
+      [/\benhanced\b/gi, "improved"],
+      [/\benhancing\b/gi, "improving"],
+      [/\benhance\b/gi, "improve"],
+      [/\bensures\b/gi, "makes sure"],
+      [/\bensured\b/gi, "made sure"],
+      [/\bensuring\b/gi, "making sure"],
+      [/\bensure\b/gi, "make sure"],
+      [/\bfosters\b/gi, "builds"],
+      [/\bfostered\b/gi, "built"],
+      [/\bfostering\b/gi, "building"],
+      [/\bfoster\b/gi, "build"],
+      [/\bstreamlines\b/gi, "simplifies"],
+      [/\bstreamlined\b/gi, "simplified"],
+      [/\bstreamlining\b/gi, "simplifying"],
+      [/\bstreamline\b/gi, "simplify"],
+      [/\bdelves\b/gi, "digs"],
+      [/\bdelved\b/gi, "dug"],
+      [/\bdelving\b/gi, "digging"],
+      [/\bdelve\b/gi, "dig"],
+      // AI cliché words
+      [/\bseamlessly\b/gi, "smoothly"],
+      [/\bseamless\b/gi, "smooth"],
+      [/\btransformative\b/gi, "powerful"],
+      [/\btapestry\b/gi, "mix"],
+      // AI transition words — remove or replace
+      [/\bfurthermore,?\s*/gi, ""],
+      [/\bmoreover,?\s*/gi, ""],
+      [/\badditionally,?\s*/gi, "Also, "],
+      [/\bin conclusion,?\s*/gi, ""],
+      [/\bin summary,?\s*/gi, ""],
+      [/\bultimately,?\s*/gi, ""],
+      [/\bsubsequently,?\s*/gi, "then "],
+      [/\bconsequently,?\s*/gi, "so "],
+    ];
+
+    for (const [pattern, replacement] of replacements) {
+      result = result.replace(pattern, replacement);
+    }
+
+    // ── STAGE 4: Oxford comma removal ─────────────────────────────────────────
     result = result.replace(/,\s+and\b/gi, " and");
-    // Remove comma after 'and'
-    result = result.replace(/\band\s+,/gi, "and ");
-    // Remove comma before 'or'
     result = result.replace(/,\s+or\b/gi, " or");
-    // Remove comma after 'or'
-    result = result.replace(/\bor\s+,/gi, "or ");
+
+    // ── STAGE 5: Clean up double spaces / blank lines from removed words ───────
+    result = result.replace(/  +/g, " ").replace(/\n {2,}/g, "\n").trim();
 
     // Estimate score
     const humanityScore = estimateHumanityScore(result);
