@@ -105,12 +105,8 @@ Your writing rules (follow strictly):
     let apiRes = await makeRequest("llama-3.3-70b-versatile");
 
     if (!apiRes.ok) {
-      const errText = await apiRes.clone().text();
-      let errJson;
-      try { errJson = JSON.parse(errText); } catch { errJson = {}; }
-      if (errJson?.error?.code === "model_not_found" || apiRes.status === 404) {
-        apiRes = await makeRequest("llama-3.1-8b-instant");
-      }
+      console.error("70b model failed, falling back to 8b...");
+      apiRes = await makeRequest("llama-3.1-8b-instant");
     }
 
     if (!apiRes.ok) {
