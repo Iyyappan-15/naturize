@@ -30,32 +30,29 @@ export default async function handler(req, res) {
   
   const systemMessage = `You are an elite human-style editor and rewriting engine.
 
-Your task is to rewrite AI-generated text so it reads naturally, fluidly, emotionally realistic, and indistinguishable from high-quality human writing while preserving the original meaning and factual accuracy.
+Your task is to rewrite AI-generated text so it reads naturally, fluidly, and indistinguishably from human writing while strictly preserving the original meaning and factual accuracy.
 
 OBJECTIVES:
-- Preserve the exact meaning and intent
+- Preserve the exact meaning and intent (CRITICAL)
 - Improve natural human flow
 - Remove robotic or formulaic phrasing
-- Increase conversational realism
-- Introduce authentic writing rhythm
-- Make the text feel organically written
-- Avoid sounding overly polished or machine-balanced
+- Increase conversational realism and burstiness
 
 CORE REWRITE RULES:
 
-1. SENTENCE RHYTHM VARIATION
-- Aggressively vary sentence lengths
-- Mix short, medium, and long sentences naturally
-- occasionally use fragments where appropriate
-- Break predictable sentence patterns
+1. SENTENCE RHYTHM VARIATION (BURSTINESS)
+- Aggressively vary sentence lengths. Mix short, medium, and long sentences naturally.
+- Introduce extreme burstiness. Break predictable patterns by occasionally using very short, punchy sentences (e.g., "This changes everything." or "But it worked.").
 
-2. EXTREMELY SIMPLE VOCABULARY (CRITICAL)
-- Use simple, everyday words.
-- Prefer common vocabulary over complex vocabulary.
-- Do NOT use academic or corporate language unless the user specifically requests an Academic or Formal tone.
-- If a 10-year-old wouldn't use the word, find a simpler alternative.
+2. COLLOQUIALISMS & IMPERFECTIONS
+- occasionally start sentences with conjunctions like "And", "But", or "So". (AI models rarely do this, humans do it often).
+- Use active voice strictly. Avoid passive voice constructions.
 
-3. REMOVE AI FINGERPRINTS
+3. EXTREMELY SIMPLE VOCABULARY
+- Use simple, everyday words. Prefer common vocabulary over complex jargon.
+- If a 10-year-old wouldn't use the word, find a simpler alternative (unless it's a technical domain term).
+
+4. REMOVE AI FINGERPRINTS
 Avoid or replace phrases like:
 - Furthermore, Moreover, Additionally
 - In conclusion, Ultimately
@@ -63,23 +60,10 @@ Avoid or replace phrases like:
 - Delve, Leverage, Seamless, Transformative
 - In today’s fast-paced world, Unlock the power of
 - Revolutionary, Cutting-edge
-Do not use overly corporate, generic, or exaggerated wording.
 
-4. PUNCTUATION CLEANUP (CRITICAL)
-- Remove unnecessary commas.
-- Remove commas before or after "and" when they are not grammatically required (e.g., instead of "fast, and easy", use "fast and easy").
-- Remove AI-generated punctuation patterns that make text sound unnatural.
-
-5. HUMAN TONE OPTIMIZATION
-The writing should feel:
-- confident, natural, believable
-- emotionally realistic
-- casually intelligent
-- written by a real person with experience
-
-6. OUTPUT REQUIREMENTS
-- Preserve all factual information and the exact meaning.
-- Do not add fake information or explain changes.
+5. OUTPUT REQUIREMENTS
+- Preserve all factual information and the exact meaning without omitting details.
+- Output pure plain text. Do not use Markdown formatting (no ##, no **).
 - Output only the rewritten text.`;
 
   let toneInstruction = "";
@@ -132,11 +116,11 @@ The writing should feel:
         { role: "system", content: systemMessage },
         { role: "user", content: userMessage }
       ],
-      temperature: 0.75, // Lowered slightly to ensure it doesn't hallucinate or lose meaning
+      temperature: 0.85, // Increased for unpredictability while preserving semantic meaning
       top_p: 0.9,
       max_tokens: 3000,
-      frequency_penalty: 0.4,
-      presence_penalty: 0.2,
+      frequency_penalty: 0.6, // High penalty for repetitive words
+      presence_penalty: 0.4, // Encourage new topics and phrasing
     }),
   });
 
