@@ -31,17 +31,17 @@ export default async function handler(req, res) {
   // This version + the JS post-processor below covers all 3.
   // ─────────────────────────────────────────────────────────────────────────
 
-  const systemMessage = `You are an experienced human professional explaining a topic to a general audience. You are opinionated, direct and occasionally skeptical.
+  const systemMessage = `You are a human writer drafting a completely original article based on the provided notes.
 
 Your writing rules (follow strictly):
-- Write from a first-person perspective where it feels natural. Use "I think", "I'd argue", "in my view" occasionally.
-- Vary sentence length drastically. Write some sentences of 3-5 words. Others can be long and detailed. Never string together sentences of similar length.
-- Never start two consecutive paragraphs the same way.
+- Do NOT write sentence fragments. Every sentence must have a clear subject and verb.
+- Ban on long lists: AI models love writing lists of 3, 4 or 5 items (e.g., "A, B, C, D and E"). You are strictly forbidden from doing this. If you need to list things, name a maximum of two examples and move on. NEVER write a list of 3 or more items.
+- Information Spacing: Do not pack every sentence with dense facts. Spread the information out naturally across multiple sentences.
+- Vary sentence length drastically, but keep it grammatically correct.
 - Avoid all of these words entirely: undeniable, crucial, significant, sophisticated, nuanced, comprehensive, multifaceted, paramount, imperative, substantial, innovative, robust, cutting-edge, streamline, foster, facilitate, enhance, ensure, demonstrate, utilize, leverage, delve, seamless, transformative, tapestry, furthermore, moreover, additionally, in conclusion, ultimately.
 - Replace those words with plain everyday equivalents.
 - Do NOT use Oxford commas.
 - No markdown. No headers. No bullet points. No bold.
-- You MUST preserve every fact, data point and meaning from the original. Do not add or remove information.
 - Output only the final text. No "Here is..." intro.`;
 
   let toneInstruction = "";
@@ -80,7 +80,7 @@ Your writing rules (follow strictly):
       regionInstruction = "Region: American English.";
   }
 
-  const userMessage = `${toneInstruction}\n${regionInstruction}\n\nRewrite the following in your own voice. Keep every fact intact. Make it sound like a real person wrote it:\n\n${sanitized}`;
+  const userMessage = `${toneInstruction}\n${regionInstruction}\n\nHere are the notes. Do not just rewrite them. Internalize the information and write a completely fresh, natural piece explaining it from scratch. Remember: NO LISTS OF MORE THAN 2 ITEMS.\n\n${sanitized}`;
 
   const makeRequest = async (model) => fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -350,18 +350,6 @@ function injectHumanStructure(text) {
 
       return [trimmed];
     });
-
-    // ── Rule C: Add informal hedge to first sentence of every 3rd paragraph ────
-    if (pIdx > 0 && pIdx % 3 === 2 && newSents.length > 0) {
-      const hedge = hedgeStarters[hedgeCounter % hedgeStarters.length];
-      hedgeCounter++;
-      const first = newSents[0];
-      // Don't re-hedge sentences that already start with a hedge
-      const alreadyHedged = hedgeStarters.some(h => first.startsWith(h.trim()));
-      if (!alreadyHedged && first.length > 10) {
-        newSents[0] = hedge + first.charAt(0).toLowerCase() + first.slice(1);
-      }
-    }
 
     return newSents.join(' ');
   });
