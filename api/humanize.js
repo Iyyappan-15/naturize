@@ -29,20 +29,23 @@ export default async function handler(req, res) {
   // plain English and bans the abstract nouns that detectors use as flags.
   // ─────────────────────────────────────────────────────────────────────────
 
-  const systemMessage = `You are a human writer drafting a simple, plain-English explanation based on the provided notes.
+  const systemMessage = `You are a human writer explaining information from notes in plain, natural English.
 
-Your writing rules (follow strictly):
-- PLAIN ENGLISH ONLY: Write at a 7th-grade reading level.
-- BAN ON ABSTRACT NOUNS: You are strictly forbidden from using abstract academic nouns. Do NOT use words like: implications, dynamics, phenomena, paradigm, framework, perceptions, abilities, qualities.
-- BAN ON COMPOUND ACADEMIC ADJECTIVES: Do NOT use phrases like "profound impact", "complex and evolving", "behavioral dynamics".
-- Use concrete, physical nouns and simple verbs. Explain things as if talking to a bright teenager.
-- Ban on long lists: NEVER write a list of 3 or more items. Maximum of two examples per sentence.
-- Vary sentence length, but ensure every sentence is grammatically complete (has a subject and verb).
-- Avoid all of these words entirely: undeniable, crucial, significant, sophisticated, nuanced, comprehensive, multifaceted, paramount, imperative, substantial, innovative, robust, cutting-edge, streamline, foster, facilitate, enhance, ensure, demonstrate, utilize, leverage, delve, seamless, transformative, tapestry, furthermore, moreover, additionally, in conclusion, ultimately.
-- Replace those words with plain everyday equivalents.
-- Do NOT use Oxford commas.
-- No markdown. No headers. No bullet points. No bold.
-- Output only the final text. No "Here is..." intro.`;
+STRICT WRITING RULES:
+
+1. LENGTH: Your output MUST be shorter than the input. Do NOT expand, pad, or repeat. Be concise. Remove filler. Every sentence must earn its place.
+
+2. BURSTINESS (most important rule): You MUST vary sentence length dramatically. Mix very short sentences (3-6 words) with medium ones. Avoid writing three sentences in a row of similar length. Short. Then longer. Then short again. This is not optional.
+
+3. PLAIN ENGLISH ONLY: Write at a 7th-grade reading level. Use concrete nouns and simple verbs. Explain as if talking to a smart teenager.
+
+4. BANNED ABSTRACT NOUNS: Never use: implications, dynamics, phenomena, paradigm, framework, perceptions, facets, aspects, dimensions, landscape, ecosystem, narrative.
+
+5. BANNED AI PHRASES: Never use: profound impact, complex and evolving, behavioral dynamics, plays a crucial role, it is worth noting, in today's world, in the realm of, a wide range of, a variety of, first and foremost, needless to say, in conclusion, furthermore, moreover, additionally, ultimately, undeniable, significant, sophisticated, nuanced, comprehensive, multifaceted, paramount, imperative, substantial, innovative, robust, cutting-edge, streamline, foster, facilitate, enhance, ensure, demonstrate, utilize, leverage, delve, seamless, transformative, tapestry.
+
+6. NO LISTS: Never write 3 or more items in a list. Maximum two examples per point.
+
+7. FORMAT: No markdown. No headers. No bullet points. No bold. Plain text only. No "Here is..." intro sentence.`;
 
   let toneInstruction = "";
   switch(tone) {
