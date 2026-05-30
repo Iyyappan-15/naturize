@@ -621,9 +621,86 @@ function renderDetectorResult(result) {
     label   = 'Confidence';
   }
 
-  score = Math.min(100, Math.max(0, score));
+  score = Math.min(99, Math.max(0, score));
   const R = 65;
-  const circumference = 2 * Math.PI * R; // 408.41
+  const circumference = 2 * Math.PI * R;
+
+  // ── Sentence heat map ─────────────────────────────────────────
+  const sentHtml = (() => {
+    const sentences  = result.sentences      || [];
+    const scores     = result.sentence_scores || [];
+    if (sentences.length === 0) return '';
+
+    const chips = sentences.map((s, i) => {
+      const sc  = Number(scores[i]) || 50;
+      let bg, border, title;
+      if (sc >= 65) {
+        bg = 'rgba(255,68,68,0.13)'; border = 'rgba(255,68,68,0.40)';
+        title = `AI sentence (${sc}%)`;
+      } else if (sc <= 35) {
+        bg = 'rgba(0,201,167,0.12)'; border = 'rgba(0,201,167,0.35)';
+        title = `Human sentence (${100 - sc}% human)`;
+      } else {
+        bg = 'rgba(245,158,11,0.10)'; border = 'rgba(245,158,11,0.30)';
+        title = `Mixed / uncertain (${sc}% AI)`;
+      }
+      return `<span title="${escapeHtml(title)}" style="
+        display:inline;background:${bg};border:1px solid ${border};
+        border-radius:4px;padding:1px 3px;margin:2px 1px;
+        font-size:0.84rem;line-height:1.75;cursor:default;
+      ">${escapeHtml(s.trim())}.</span>`;
+    }).join(' ');
+
+    return `
+    <div style="background:var(--surface2,#1e1e22);border:1px solid var(--border);
+      border-radius:10px;padding:16px;width:100%;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <h4 style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text);margin:0;">
+          🔬 Sentence Analysis
+        </h4>
+        <div style="display:flex;gap:10px;font-size:0.72rem;color:var(--muted);">
+          <span><span style="display:inline-block;width:10px;height:10px;background:rgba(255,68,68,0.4);border-radius:2px;margin-right:4px;"></span>AI</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:rgba(245,158,11,0.4);border-radius:2px;margin-right:4px;"></span>Mixed</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:rgba(0,201,167,0.4);border-radius:2px;margin-right:4px;"></span>Human</span>
+        </div>
+      </div>
+      <div style="line-height:2;text-align:left;">${chips}</div>
+    </div>`;
+  })();
+
+  // ── Metrics pills ─────────────────────────────────────────────
+  const metricsHtml = (() => {
+    const m = result.metrics;
+    if (!m) return '';
+    const pills = [
+      { label: 'Burstiness', value: m.burstiness, hint: m.burstiness >= 25 ? '✅ human' : m.burstiness < 8 ? '🤖 AI' : '' },
+      { label: 'Stat AI Score', value: `${m.statistical_ai_score}/100` },
+      { label: 'LLM AI Prob', value: `${m.llm_ai_probability}%` },
+      { label: 'Fused AI Score', value: `${m.fused_ai_score}/100` },
+      { label: 'Clichés', value: m.cliche_count === 0 ? '0 ✅' : `${m.cliche_count} 🤖` },
+      { label: 'Passive Rate', value: m.passive_rate },
+      { label: 'Contractions', value: m.contraction_count > 2 ? `${m.contraction_count} ✅` : m.contraction_count },
+      { label: 'Formality', value: m.formality_index },
+      { label: 'Avg Sent. Len', value: `${m.avg_sentence_length} words` },
+    ];
+    return `
+    <div style="background:var(--surface2,#1e1e22);border:1px solid var(--border);
+      border-radius:10px;padding:12px;width:100%;">
+      <h4 style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;
+        margin-bottom:10px;color:var(--text);">📊 Detection Metrics</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;">
+        ${pills.map(p => `
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+            padding:4px 10px;border-radius:6px;font-size:0.72rem;color:var(--muted);">
+            <strong style="color:var(--text);">${p.label}:</strong> ${p.value}${p.hint ? ` <span style="opacity:0.7;">${p.hint}</span>` : ''}
+          </div>`).join('')}
+      </div>
+      ${m.cliches_found && m.cliches_found !== 'none' ? `
+        <div style="margin-top:8px;font-size:0.72rem;color:rgba(255,100,100,0.8);">
+          🤖 Clichés detected: <em>${escapeHtml(m.cliches_found)}</em>
+        </div>` : ''}
+    </div>`;
+  })();
 
   dResult.innerHTML = `
     <div class="detector-result">
@@ -665,16 +742,8 @@ function renderDetectorResult(result) {
         </div>
       </div>
 
-      ${result.metrics_analysis ? `
-      <div style="background:var(--surface2,#1e1e22);border:1px solid var(--border);padding:12px;border-radius:10px;width:100%;">
-        <h4 style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;color:var(--text);">📊 Metrics</h4>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">
-          ${Object.entries(result.metrics_analysis).map(([k, v]) => `
-            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:4px 10px;border-radius:6px;font-size:0.72rem;color:var(--muted);">
-              <strong style="color:var(--text);">${k.replace(/_/g,' ')}:</strong> ${v}
-            </div>`).join('')}
-        </div>
-      </div>` : ''}
+      ${sentHtml}
+      ${metricsHtml}
     </div>`;
 
   // Animate ring and count-up score
@@ -695,6 +764,9 @@ function renderDetectorResult(result) {
     }, 100);
   });
 }
+
+
+
 
 
 async function runDetect() {
