@@ -633,23 +633,31 @@ function renderDetectorResult(result) {
 
     const chips = sentences.map((s, i) => {
       const sc  = Number(scores[i]) || 50;
-      let bg, border, title;
+      let bg, border, textColor, title;
       if (sc >= 65) {
-        bg = 'rgba(255,68,68,0.13)'; border = 'rgba(255,68,68,0.40)';
-        title = `AI sentence (${sc}%)`;
+        bg        = 'rgba(220,38,38,0.18)';
+        border    = '#ef4444';
+        textColor = '#ff6b6b';
+        title = `AI sentence — ${sc}% AI probability`;
       } else if (sc <= 35) {
-        bg = 'rgba(0,201,167,0.12)'; border = 'rgba(0,201,167,0.35)';
-        title = `Human sentence (${100 - sc}% human)`;
+        bg        = 'rgba(5,150,105,0.16)';
+        border    = '#10b981';
+        textColor = '#34d399';
+        title = `Human sentence — ${100 - sc}% human probability`;
       } else {
-        bg = 'rgba(245,158,11,0.10)'; border = 'rgba(245,158,11,0.30)';
-        title = `Mixed / uncertain (${sc}% AI)`;
+        bg        = 'rgba(217,119,6,0.16)';
+        border    = '#f59e0b';
+        textColor = '#fbbf24';
+        title = `Mixed / uncertain — ${sc}% AI probability`;
       }
       return `<span title="${escapeHtml(title)}" style="
         display:inline;background:${bg};border:1px solid ${border};
-        border-radius:4px;padding:1px 3px;margin:2px 1px;
-        font-size:0.84rem;line-height:1.75;cursor:default;
+        border-radius:5px;padding:2px 4px;margin:2px 2px;
+        font-size:0.84rem;line-height:1.9;cursor:default;
+        color:${textColor};font-weight:500;
       ">${escapeHtml(s.trim())}.</span>`;
     }).join(' ');
+
 
     return `
     <div style="background:var(--surface2,#1e1e22);border:1px solid var(--border);
