@@ -1071,6 +1071,25 @@ function loadDemoAndHumanize() {
 document.getElementById('proof-demo-btn')?.addEventListener('click', loadDemoAndHumanize);
 document.getElementById('demo-trigger-btn')?.addEventListener('click', loadDemoAndHumanize);
 
+/* ══════════════════════════════════════════════
+   NAVBAR TAB SWITCHING
+   Automatically switch tabs when clicking navbar links
+══════════════════════════════════════════════ */
+document.querySelectorAll('a[href="#tool"]').forEach(link => {
+  link.addEventListener('click', () => {
+    if (link.textContent.includes('Detector')) {
+      switchTab('detect');
+    } else if (link.textContent.includes('Humanizer')) {
+      switchTab('humanize');
+    }
+    // Auto-close mobile menu if it's open
+    if (mobileMenu && mobileMenu.classList.contains('open')) {
+      mobileMenu.classList.remove('open');
+      if (hamburger) hamburger.classList.remove('open');
+    }
+  });
+});
+
 // Init
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
