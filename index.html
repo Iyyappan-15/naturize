@@ -213,10 +213,113 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
             Start Humanizing
           </button>
-          <button class="btn btn--ghost" data-scroll="#tool" aria-label="Try the AI detector">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            Try Detector
+          <button class="btn btn--ghost" id="demo-trigger-btn" aria-label="See a live demo">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            See Live Demo
           </button>
+        </div>
+
+        <!-- ── TRUST BADGES ── -->
+        <div class="hero__trust" aria-label="Trust indicators">
+          <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Free forever</span>
+          <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> No signup needed</span>
+          <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Bypasses GPTZero &amp; Turnitin</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         BEFORE / AFTER PROOF SECTION
+    ═══════════════════════════════════════ -->
+    <section class="proof-section" id="proof" aria-labelledby="proof-heading">
+      <div class="container">
+
+        <div class="section-label">Real Results</div>
+        <h2 class="section-title reveal" id="proof-heading">See the transformation</h2>
+        <p class="proof-subtitle reveal">Paste the same AI text into GPTZero before and after Naturize. Here's what happens.</p>
+
+        <!-- BEFORE / AFTER CARDS -->
+        <div class="proof-grid reveal">
+
+          <!-- BEFORE card -->
+          <div class="proof-card proof-card--before">
+            <div class="proof-card__header">
+              <div class="proof-badge proof-badge--ai">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                Before Naturize
+              </div>
+              <div class="proof-detector-label">GPTZero score</div>
+            </div>
+            <div class="proof-score-ring" aria-label="AI score 97 percent">
+              <svg class="ring-svg" viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
+                <circle class="ring-bg" cx="60" cy="60" r="50" />
+                <circle class="ring-fill ring-fill--danger" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="9" />
+              </svg>
+              <div class="proof-score-inner">
+                <span class="proof-score-num" data-target="97">0</span>
+                <span class="proof-score-pct">%</span>
+                <span class="proof-score-label">AI</span>
+              </div>
+            </div>
+            <div class="proof-verdict proof-verdict--fail">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              Flagged as AI-Generated
+            </div>
+            <div class="proof-text-preview" aria-label="Raw AI text sample">
+              <p>"Artificial intelligence <mark class="ai-word">plays a crucial role</mark> in today's society. <mark class="ai-word">Furthermore</mark>, it is <mark class="ai-word">important to note</mark> that AI <mark class="ai-word">leverages</mark> complex <mark class="ai-word">multifaceted</mark> systems to <mark class="ai-word">enhance</mark> our lives in <mark class="ai-word">significant</mark> ways. <mark class="ai-word">Moreover</mark>, the <mark class="ai-word">profound impact</mark> of this technology is <mark class="ai-word">undeniable</mark>."</p>
+            </div>
+            <div class="proof-text-tag">⚠ 6 AI clichés detected</div>
+          </div>
+
+          <!-- ARROW -->
+          <div class="proof-arrow" aria-hidden="true">
+            <div class="proof-arrow__icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <span>Naturize</span>
+          </div>
+
+          <!-- AFTER card -->
+          <div class="proof-card proof-card--after">
+            <div class="proof-card__header">
+              <div class="proof-badge proof-badge--human">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                After Naturize
+              </div>
+              <div class="proof-detector-label">GPTZero score</div>
+            </div>
+            <div class="proof-score-ring" aria-label="AI score 8 percent">
+              <svg class="ring-svg" viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
+                <circle class="ring-bg" cx="60" cy="60" r="50" />
+                <circle class="ring-fill ring-fill--success" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="289" />
+              </svg>
+              <div class="proof-score-inner">
+                <span class="proof-score-num" data-target="8">0</span>
+                <span class="proof-score-pct">%</span>
+                <span class="proof-score-label">AI</span>
+              </div>
+            </div>
+            <div class="proof-verdict proof-verdict--pass">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              Passes as Human Written
+            </div>
+            <div class="proof-text-preview" aria-label="Naturized text sample">
+              <p>"AI is changing how we live — fast. It runs recommendation engines, helps doctors spot diseases earlier, and cuts through problems that would've taken teams of people months to solve. That's not a small thing. Whether that's good or bad depends entirely on how the people building it choose to act."</p>
+            </div>
+            <div class="proof-text-tag proof-text-tag--clean">✓ 0 AI clichés — Naturized</div>
+          </div>
+
+        </div><!-- /proof-grid -->
+
+        <!-- ONE-CLICK DEMO BUTTON -->
+        <div class="proof-demo-cta reveal">
+          <p class="proof-demo-label">Want to try it yourself? Load a sample AI text into the humanizer with one click:</p>
+          <button class="btn btn--primary btn--lg" id="proof-demo-btn" aria-label="Load sample AI text and try the humanizer">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Try It Now — Load Sample &amp; Humanize
+          </button>
+          <span class="proof-demo-note">No typing needed · Instant result</span>
         </div>
 
       </div>

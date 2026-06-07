@@ -998,6 +998,79 @@ $('#d-input')?.addEventListener('input', (e) => {
   if (val === '') dClear();
 });
 
+/* ══════════════════════════════════════════════
+   PROOF SECTION — Score counter animation
+   Animates numbers up when section scrolls into view
+══════════════════════════════════════════════ */
+function animateScoreCounters() {
+  const nums = document.querySelectorAll('.proof-score-num[data-target]');
+  nums.forEach(el => {
+    const target = parseInt(el.dataset.target, 10);
+    const duration = 1200;
+    const start = performance.now();
+    const step = (now) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(eased * target);
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+// Trigger animation when proof section enters viewport
+const proofSection = document.getElementById('proof');
+if (proofSection) {
+  let countersAnimated = false;
+  const proofObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !countersAnimated) {
+        countersAnimated = true;
+        animateScoreCounters();
+      }
+    });
+  }, { threshold: 0.3 });
+  proofObserver.observe(proofSection);
+}
+
+/* ══════════════════════════════════════════════
+   ONE-CLICK DEMO BUTTON
+   Loads sample AI text → scrolls to tool → auto-triggers humanize
+══════════════════════════════════════════════ */
+const SAMPLE_AI_TEXT = `Artificial intelligence plays a crucial role in today's society. Furthermore, it is important to note that AI leverages complex multifaceted systems to enhance our lives in significant ways. The profound impact of this transformative technology is undeniable, and it is worth noting that its seamless integration into various facets of our daily routine has fostered unprecedented innovation. Moreover, AI has the potential to revolutionize a wide range of industries, from healthcare to education, thereby ensuring that humanity can navigate the complex and evolving landscape of modern challenges.`;
+
+function loadDemoAndHumanize() {
+  const toolSection = document.getElementById('tool');
+  const input = document.getElementById('h-input');
+  const humanizeBtn = document.getElementById('h-btn');
+  const tabHumanize = document.querySelector('[data-tab="humanize"]');
+
+  if (!input || !humanizeBtn) return;
+
+  // Switch to humanizer tab
+  if (tabHumanize) tabHumanize.click();
+
+  // Load sample text
+  input.value = SAMPLE_AI_TEXT;
+  input.dispatchEvent(new Event('input'));
+
+  // Scroll to tool section smoothly
+  if (toolSection) {
+    toolSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Brief pause then trigger humanize (so scroll completes first)
+  setTimeout(() => {
+    humanizeBtn.click();
+  }, 700);
+}
+
+// Wire up both demo buttons
+document.getElementById('proof-demo-btn')?.addEventListener('click', loadDemoAndHumanize);
+document.getElementById('demo-trigger-btn')?.addEventListener('click', loadDemoAndHumanize);
+
 // Init
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
