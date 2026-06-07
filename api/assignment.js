@@ -1,3 +1,5 @@
+import checkRateLimit from '../utils/rateLimit.js';
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -5,6 +7,12 @@ export default async function handler(req, res) {
 
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
+
+  // Rate Limiting (15 requests per minute per IP)
+  const rateLimit = checkRateLimit(req, 15, 60000);
+  if (!rateLimit.success) {
+    return res.status(429).json({ error: "Too many requests. Please try again in a minute." });
+  }
 
   const { topic, pages = "1", level = "High School" } = req.body;
   if (!topic || typeof topic !== "string" || topic.trim().length === 0)
