@@ -210,8 +210,8 @@ section{position:relative}
 
 /* ── FEATURES ── */
 .features-section{padding:80px 24px}
-.section-label{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:12px}
-.section-title{margin-bottom:48px}
+.section-label{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:12px;text-align:center}
+.section-title{margin-bottom:48px;text-align:center}
 .features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
 .feature-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;transition:var(--transition);cursor:default}
 .feature-card:hover{transform:translateY(-5px);border-color:rgba(0,229,192,0.2);box-shadow:0 20px 60px rgba(0,0,0,0.4),0 0 0 1px rgba(0,229,192,0.1)}
