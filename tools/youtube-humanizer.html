@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Free YouTube Script Humanizer — Make Scripts Sound Natural | Naturize</title>
+  <meta name="description" content="Instantly rewrite AI-generated YouTube scripts to sound conversational, natural, and easy to speak aloud on camera. Free tool for creators." />
+  <meta name="keywords" content="YouTube script humanizer, make script sound natural, AI script rewriter, YouTube content tool free, humanize YouTube script, read aloud checker" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://naturize.iyyappan.me/tools/youtube-humanizer.html" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  <link rel="stylesheet" href="../styles.css" />
+
+  <style>
+    .page-header {
+      text-align: center;
+      padding: 60px 20px 40px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255,0,0,0.1) 0%, transparent 70%);
+      position: relative;
+    }
+    .page-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,0,0,0.12);
+      border: 1px solid rgba(255,0,0,0.3);
+      color: #ff0000;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    html.light .page-badge { color: #d90000; }
+    .page-header h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; margin-bottom: 14px; line-height: 1.2; }
+    .page-header h1 span { color: #ff0000; }
+    .page-header p { color: var(--muted); font-size: 1.05rem; max-width: 600px; margin: 0 auto; line-height: 1.7; }
+
+    .tool-wrapper { max-width: 860px; margin: 0 auto; padding: 0 20px 80px; }
+
+    .tool-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 30px;
+      margin-bottom: 24px;
+    }
+
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .form-select, .form-textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.97rem;
+      transition: border-color 0.2s;
+    }
+    .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: #ff0000;
+    }
+    .form-textarea { min-height: 250px; resize: vertical; line-height: 1.6; }
+
+    .char-counter {
+      text-align: right;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 6px;
+      transition: color 0.2s;
+    }
+    .char-counter.warn { color: #ffc800; }
+    .char-counter.over  { color: #ff5c7a; }
+
+    .style-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .style-card {
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      background: var(--surface2);
+    }
+    .style-card:hover { border-color: #ff0000; }
+    .style-card.selected {
+      border-color: #ff0000;
+      background: rgba(255,0,0,0.08);
+    }
+    .style-card-icon { font-size: 1.6rem; margin-bottom: 8px; }
+    .style-card-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; color: var(--text); }
+    .style-card-desc  { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+
+    .btn-generate {
+      width: 100%;
+      padding: 15px;
+      background: #ff0000;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .btn-generate:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Output */
+    .output-panel {
+      background: var(--surface);
+      border: 1px solid rgba(255,0,0,0.25);
+      border-radius: var(--radius);
+      padding: 30px;
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .output-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,0,0,0.1);
+      border: 1px solid rgba(255,0,0,0.25);
+      color: #ff0000;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    
+    .stats-row {
+      display: flex;
+      gap: 16px;
+      background: var(--surface2);
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .output-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-action {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: inherit;
+    }
+    .btn-copy {
+      background: rgba(0,229,192,0.1);
+      border: 1px solid rgba(0,229,192,0.3);
+      color: var(--accent);
+    }
+    .btn-copy:hover { background: rgba(0,229,192,0.2); }
+    .btn-check-aloud {
+      background: rgba(255,200,0,0.1);
+      border: 1px solid rgba(255,200,0,0.3);
+      color: #ffc800;
+    }
+    .btn-check-aloud:hover { background: rgba(255,200,0,0.2); }
+
+    .output-text {
+      font-size: 1.05rem;
+      line-height: 1.9;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      padding: 16px;
+      background: var(--surface2);
+      border-radius: 8px;
+    }
+    
+    /* Highlight for long sentences */
+    .highlight-long {
+      background-color: rgba(255, 92, 122, 0.2);
+      border-bottom: 1px dashed var(--danger);
+      padding: 2px 0;
+    }
+
+    /* Loader */
+    .loader {
+      display: none;
+      margin: 24px auto;
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(255,0,0,0.25);
+      border-radius: 50%;
+      border-top-color: #ff0000;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Tips banner */
+    .tips-banner {
+      background: rgba(255,0,0,0.06);
+      border: 1px solid rgba(255,0,0,0.15);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+    .tips-banner h3 { font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+    .tips-banner ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 20px; }
+    .tips-banner li { font-size: 0.82rem; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+    .tips-banner li::before { content: '✓'; color: #ff0000; font-weight: 700; }
+
+    /* Toast */
+    .toast-msg {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      z-index: 999;
+      transition: transform 0.3s ease;
+    }
+    .toast-msg.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 600px) {
+      .style-grid { grid-template-columns: 1fr; }
+      .output-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header>
+  <nav class="navbar" aria-label="Main navigation">
+    <a href="../index.html" class="nav-logo" aria-label="Naturize home">
+      <img src="/logo.png" alt="Naturize logo" width="30" height="30" style="border-radius:6px;object-fit:cover" />
+      <span>Natur<span>ize</span></span>
+    </a>
+    <div class="nav-links" role="list">
+      <a href="../index.html#tool" role="listitem">Humanizer</a>
+      <a href="../index.html#tool" role="listitem">Detector</a>
+      <div class="nav-dropdown" role="listitem">
+        <a href="#" style="cursor:default;" class="active">Generators ▾</a>
+        <div class="nav-dropdown-content">
+          <a href="assignment-generator.html">Assignment Generator</a>
+          <a href="email-composer.html">Email Composer</a>
+          <a href="cover-letter-generator.html">Cover Letter Generator</a>
+          <a href="writing-analyzer.html">Writing Analyzer</a>
+          <a href="linkedin-humanizer.html">LinkedIn Humanizer</a>
+          <a href="youtube-humanizer.html" class="active">YouTube Script Humanizer</a>
+        </div>
+      </div>
+      <a href="../index.html#features" role="listitem">Features</a>
+      <a href="../index.html#donate" role="listitem">Donate</a>
+    </div>
+    <div class="nav-right">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+        <svg class="icon-moon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Toggle mobile menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <nav class="mobile-menu" id="mobile-menu">
+    <a href="../index.html#tool">Humanizer</a>
+    <a href="../index.html#tool">Detector</a>
+    <a href="assignment-generator.html">Assignment Generator</a>
+    <a href="email-composer.html">Email Composer</a>
+    <a href="cover-letter-generator.html">Cover Letter Generator</a>
+    <a href="writing-analyzer.html">Writing Analyzer</a>
+    <a href="linkedin-humanizer.html">LinkedIn Humanizer</a>
+    <a href="youtube-humanizer.html" class="active">YouTube Script Humanizer</a>
+    <a href="../index.html#features">Features</a>
+    <a href="../index.html#donate">Donate</a>
+  </nav>
+</header>
+
+<!-- PAGE HEADER -->
+<section class="page-header">
+  <div class="page-badge">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>
+    YouTube Script Humanizer
+  </div>
+  <h1>Make Scripts Sound <span>Spoken</span></h1>
+  <p>AI writes like an essay. Humans talk in fragments. Rewrite your scripts to flow naturally when read aloud on camera.</p>
+</section>
+
+<!-- TOOL -->
+<div class="tool-wrapper">
+
+  <div class="tips-banner">
+    <h3>💡 Why do scripts sound robotic?</h3>
+    <ul>
+      <li>Sentences are too long to say in one breath</li>
+      <li>Words like "furthermore" are never spoken</li>
+      <li>No natural pauses or pacing markers</li>
+    </ul>
+  </div>
+
+  <div class="tool-panel">
+    <!-- Video Style -->
+    <div class="form-group">
+      <label class="form-label">Choose Video Style</label>
+      <div class="style-grid">
+        <div class="style-card selected" data-style="casual-vlog" onclick="selectStyle(this)">
+          <div class="style-card-icon">👋</div>
+          <div class="style-card-title">Casual Vlog</div>
+          <div class="style-card-desc">Conversational, friendly, like talking to a friend</div>
+        </div>
+        <div class="style-card" data-style="educational-explainer" onclick="selectStyle(this)">
+          <div class="style-card-icon">🧠</div>
+          <div class="style-card-title">Educational</div>
+          <div class="style-card-desc">Clear, structured teaching, easy to digest</div>
+        </div>
+        <div class="style-card" data-style="pro-documentary" onclick="selectStyle(this)">
+          <div class="style-card-icon">🎙️</div>
+          <div class="style-card-title">Pro Documentary</div>
+          <div class="style-card-desc">Authoritative narration, deliberate pacing</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="form-group">
+      <label class="form-label" for="scriptInput">Your AI-Generated Script</label>
+      <textarea id="scriptInput" class="form-textarea" placeholder="Paste your YouTube script here (max 6,000 characters)..." oninput="updateCharCount(this)"></textarea>
+      <div class="char-counter" id="charCounter">0 / 6,000 characters</div>
+    </div>
+
+    <button id="generateBtn" class="btn-generate" onclick="generate()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Humanize Script
+    </button>
+    <div class="loader" id="loader"></div>
+  </div>
+
+  <!-- Output -->
+  <div class="output-panel" id="outputPanel">
+    <div class="output-header">
+      <div class="output-badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Ready for Teleprompter
+      </div>
+      <div class="output-actions">
+        <button class="btn-action btn-check-aloud" onclick="checkReadAloud()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Check "Read Aloud" Flow
+        </button>
+        <button class="btn-action btn-copy" onclick="copyText()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy Script
+        </button>
+      </div>
+    </div>
+    
+    <div class="stats-row">
+      <div class="stat-item">
+        <span class="stat-value" id="wordCount">0</span>
+        <span class="stat-label">Words</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="estTime">0:00</span>
+        <span class="stat-label">Est. Video Length (150 WPM)</span>
+      </div>
+    </div>
+
+    <div class="output-text" id="outputText"></div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer style="text-align:center; padding:40px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:0.9rem;">
+  <div style="margin-bottom:20px;">
+    <a href="https://rzp.io/rzp/naturize" target="_blank" rel="noopener" style="display:inline-block;background:var(--accent);color:#000;padding:10px 24px;border-radius:8px;font-weight:700;text-decoration:none;">Support Naturize ❤️</a>
+  </div>
+  <a href="../index.html" style="color:var(--accent);text-decoration:none;">← Back to Home</a>
+</footer>
+
+<div class="toast-msg" id="toast"></div>
+
+<script>
+  let selectedStyle = 'casual-vlog';
+  let rawOutputText = '';
+
+  function selectStyle(el) {
+    document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedStyle = el.dataset.style;
+  }
+
+  function updateCharCount(el) {
+    const len = el.value.length;
+    const counter = document.getElementById('charCounter');
+    counter.textContent = `${len.toLocaleString()} / 6,000 characters`;
+    counter.className = 'char-counter' + (len > 6000 ? ' over' : len > 5000 ? ' warn' : '');
+  }
+
+  async function generate() {
+    const script = document.getElementById('scriptInput').value.trim();
+    if (!script) { showToast('Please paste your script first.'); return; }
+    if (script.length > 6000) { showToast('Script exceeds 6,000 characters.'); return; }
+
+    document.getElementById('generateBtn').disabled = true;
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('outputPanel').style.display = 'none';
+
+    try {
+      const res = await fetch('/api/youtube-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ script, style: selectedStyle })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+
+      rawOutputText = data.result;
+      document.getElementById('outputText').innerText = rawOutputText;
+      
+      // Calculate stats
+      const words = rawOutputText.split(/\s+/).filter(w => w.length > 0).length;
+      document.getElementById('wordCount').textContent = words.toLocaleString();
+      
+      // Assume 150 words per minute speaking rate
+      const minutes = Math.floor(words / 150);
+      const seconds = Math.floor((words % 150) / (150 / 60));
+      document.getElementById('estTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+      document.getElementById('outputPanel').style.display = 'block';
+      document.getElementById('outputPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (err) {
+      showToast(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      document.getElementById('generateBtn').disabled = false;
+      document.getElementById('loader').style.display = 'none';
+    }
+  }
+
+  function checkReadAloud() {
+    if (!rawOutputText) return;
+    
+    // Split by sentences (rough approximation)
+    const sentences = rawOutputText.match(/[^.!?]+[.!?]+/g) || [rawOutputText];
+    let htmlContent = '';
+    
+    sentences.forEach(sentence => {
+      const wordCount = sentence.trim().split(/\s+/).length;
+      // If a sentence is longer than 25 words, it's hard to say in one breath
+      if (wordCount > 25) {
+        htmlContent += `<span class="highlight-long" title="This sentence (${wordCount} words) might be hard to say in one breath. Try breaking it up.">${sentence}</span>`;
+      } else {
+        htmlContent += sentence;
+      }
+    });
+    
+    document.getElementById('outputText').innerHTML = htmlContent;
+    showToast('Long sentences highlighted in red. Consider breaking them up.');
+  }
+
+  function copyText() {
+    if (!rawOutputText) return;
+    navigator.clipboard.writeText(rawOutputText).then(() => showToast('✓ Copied to clipboard!'));
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Mobile menu
+  document.getElementById('hamburger').addEventListener('click', function() {
+    this.classList.toggle('open');
+    document.getElementById('mobile-menu').classList.toggle('open');
+  });
+
+  // Theme toggle
+  (function(){
+    const saved = localStorage.getItem('nz_theme') || 'dark';
+    if (saved === 'light') document.documentElement.classList.add('light');
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.addEventListener('click', function(){
+      const isLight = document.documentElement.classList.toggle('light');
+      localStorage.setItem('nz_theme', isLight ? 'light' : 'dark');
+    });
+  })();
+</script>
+</body>
+</html>
