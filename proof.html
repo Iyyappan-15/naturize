@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Naturize — Authenticity Report</title>
+  <meta name="description" content="View the AI detection authenticity report for this document. Verified by Naturize." />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    /* Certificate Specific Styles */
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+    }
+    .cert-nav {
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+      background: rgba(14, 14, 16, 0.8);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .cert-nav .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cert-main {
+      flex: 1;
+      padding: 60px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .cert-card {
+      background: var(--surface);
+      border: 1px solid rgba(0, 229, 192, 0.2);
+      border-radius: 16px;
+      max-width: 800px;
+      width: 100%;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(0,229,192,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .cert-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent), #7c3aed);
+    }
+    .cert-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .cert-title {
+      font-family: var(--font-head);
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+    .cert-subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    
+    .verdict-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      padding: 30px;
+      background: rgba(0, 229, 192, 0.05);
+      border: 1px dashed rgba(0, 229, 192, 0.3);
+      border-radius: 12px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+    .verdict-shield {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(0, 229, 192, 0.15);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(0, 229, 192, 0.2);
+    }
+    .verdict-shield svg {
+      width: 40px;
+      height: 40px;
+    }
+    .verdict-details h2 {
+      font-family: var(--font-head);
+      font-size: 2.5rem;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .verdict-details p {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .verdict-meta {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .document-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .document-box h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .document-text {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    .viral-trap {
+      margin-top: 60px;
+      text-align: center;
+    }
+    .viral-trap h3 {
+      font-family: var(--font-head);
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+    }
+    .viral-trap p {
+      color: var(--muted);
+      margin-bottom: 24px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .btn-trap {
+      padding: 16px 32px;
+      font-size: 1.1rem;
+      border-radius: 100px;
+    }
+
+    /* Error state */
+    #error-state {
+      display: none;
+      text-align: center;
+      padding: 40px;
+      color: #ff5c7a;
+    }
+    #cert-content {
+      display: none; /* hidden until loaded */
+    }
+
+    @media (max-width: 600px) {
+      .cert-card { padding: 24px; }
+      .verdict-box { flex-direction: column; text-align: center; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="cert-nav">
+    <div class="container" style="max-width: 900px;">
+      <a href="/" class="nav-logo">
+        <img src="logo.png" alt="Naturize logo" width="28" height="28" style="border-radius:6px" />
+        <span>Natur<span>ize</span></span>
+      </a>
+      <a href="/" class="btn btn--primary btn--sm">Try it Free</a>
+    </div>
+  </nav>
+
+  <main class="cert-main">
+    <div id="error-state">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:16px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <h2>Invalid or Expired Report</h2>
+      <p style="color:var(--muted);margin-top:8px">This authenticity link appears to be broken or manipulated.</p>
+    </div>
+
+    <div class="cert-card" id="cert-content">
+      <div class="cert-header">
+        <h1 class="cert-title">Authenticity Report</h1>
+        <p class="cert-subtitle">This document has been verified by Naturize AI Detection.</p>
+      </div>
+
+      <div class="verdict-box">
+        <div class="verdict-shield">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+        </div>
+        <div class="verdict-details">
+          <h2>0% AI Detected</h2>
+          <p>Verified Human Written</p>
+          <div class="verdict-meta">Date Scanned: <span id="scan-date">Loading...</span></div>
+        </div>
+      </div>
+
+      <div class="document-box">
+        <h3>Document Contents</h3>
+        <div class="document-text" id="doc-text">Loading...</div>
+      </div>
+    </div>
+
+    <div class="viral-trap">
+      <h3>Want to bypass AI detectors?</h3>
+      <p>Naturize rewrites AI-generated text to pass Turnitin, GPTZero, and Phrasly with 100% human scores. Instantly.</p>
+      <a href="/" class="btn btn--primary btn-trap">
+        Humanize Your Text For Free
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:8px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        const hash = window.location.hash.substring(1);
+        const prefix = 'data=';
+        
+        if (!hash.startsWith(prefix)) throw new Error('No data');
+        
+        const b64 = hash.substring(prefix.length);
+        // decode base64, then decodeURIComponent to handle unicode safely
+        const payloadStr = decodeURIComponent(atob(b64));
+        const payload = JSON.parse(payloadStr);
+
+        if (!payload.text) throw new Error('Invalid payload');
+
+        document.getElementById('doc-text').textContent = payload.text;
+        document.getElementById('scan-date').textContent = payload.date || new Date().toLocaleDateString();
+        
+        document.getElementById('cert-content').style.display = 'block';
+
+      } catch (err) {
+        console.error('Failed to parse certificate data:', err);
+        document.getElementById('error-state').style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

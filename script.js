@@ -404,6 +404,10 @@ function renderHumanizedOutput({ result, humanityScore }) {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         Copy
       </button>
+      <button class="btn btn--ghost btn--sm" onclick="shareProof()" style="color:var(--accent); border-color:rgba(0,229,192,0.3); background:rgba(0,229,192,0.05);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Share Proof
+      </button>
       <div class="export-wrap" id="export-wrap">
         <button class="btn--docx" onclick="toggleExportMenu()" id="export-main-btn" title="Export document">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -425,6 +429,26 @@ function renderHumanizedOutput({ result, humanityScore }) {
     </div>`;
   hOutput.style.animation = 'fadeIn .5s ease forwards';
   animateHumanityMeter(humanityScore);
+}
+
+/* ── VIRAL LOOP: SHARE PROOF ── */
+async function shareProof() {
+  if (!state.lastHumanized) return;
+  try {
+    const payload = JSON.stringify({
+      text: state.lastHumanized,
+      date: new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+    });
+    // encodeURIComponent handles unicode, btoa encodes it to base64
+    const b64 = btoa(encodeURIComponent(payload));
+    const proofUrl = `${window.location.origin}/proof.html#data=${b64}`;
+    
+    await navigator.clipboard.writeText(proofUrl);
+    showToast('Proof link copied! Send it to your professor or client.', 'success');
+  } catch (err) {
+    console.error('Share proof error:', err);
+    showToast('Failed to generate proof link.', 'error');
+  }
 }
 
 function renderEmptyOutput() {
