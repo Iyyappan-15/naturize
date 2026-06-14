@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Free LinkedIn Post Humanizer — Make AI Posts Sound Human | Naturize</title>
+  <meta name="description" content="Instantly rewrite AI-generated LinkedIn posts to sound authentic, personal and human. Bypasses LinkedIn's AI detection. Free, no signup required." />
+  <meta name="keywords" content="LinkedIn post humanizer, make LinkedIn post sound human, AI LinkedIn post rewriter, LinkedIn content tool free, humanize LinkedIn post" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://naturize.iyyappan.me/tools/linkedin-humanizer.html" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  <link rel="stylesheet" href="../styles.css" />
+
+  <style>
+    .page-header {
+      text-align: center;
+      padding: 60px 20px 40px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(0,119,181,0.1) 0%, transparent 70%);
+      position: relative;
+    }
+    .page-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,119,181,0.12);
+      border: 1px solid rgba(0,119,181,0.3);
+      color: #0077b5;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    html.light .page-badge { color: #005e8e; }
+    .page-header h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; margin-bottom: 14px; line-height: 1.2; }
+    .page-header h1 span { color: #0077b5; }
+    .page-header p { color: var(--muted); font-size: 1.05rem; max-width: 600px; margin: 0 auto; line-height: 1.7; }
+
+    .tool-wrapper { max-width: 860px; margin: 0 auto; padding: 0 20px 80px; }
+
+    .tool-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 30px;
+      margin-bottom: 24px;
+    }
+
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .form-select, .form-textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.97rem;
+      transition: border-color 0.2s;
+    }
+    .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: #0077b5;
+    }
+    .form-textarea { min-height: 180px; resize: vertical; line-height: 1.6; }
+
+    .char-counter {
+      text-align: right;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 6px;
+      transition: color 0.2s;
+    }
+    .char-counter.warn { color: #ffc800; }
+    .char-counter.over  { color: #ff5c7a; }
+
+    .voice-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .voice-card {
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      background: var(--surface2);
+    }
+    .voice-card:hover { border-color: #0077b5; }
+    .voice-card.selected {
+      border-color: #0077b5;
+      background: rgba(0,119,181,0.08);
+    }
+    .voice-card-icon { font-size: 1.6rem; margin-bottom: 8px; }
+    .voice-card-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; color: var(--text); }
+    .voice-card-desc  { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+
+    .btn-generate {
+      width: 100%;
+      padding: 15px;
+      background: #0077b5;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .btn-generate:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Output */
+    .output-panel {
+      background: var(--surface);
+      border: 1px solid rgba(0,119,181,0.25);
+      border-radius: var(--radius);
+      padding: 30px;
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .output-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,119,181,0.1);
+      border: 1px solid rgba(0,119,181,0.25);
+      color: #0077b5;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .output-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-action {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: inherit;
+    }
+    .btn-copy {
+      background: rgba(0,229,192,0.1);
+      border: 1px solid rgba(0,229,192,0.3);
+      color: var(--accent);
+    }
+    .btn-copy:hover { background: rgba(0,229,192,0.2); }
+    .btn-share {
+      background: rgba(0,119,181,0.1);
+      border: 1px solid rgba(0,119,181,0.3);
+      color: #0077b5;
+    }
+    .btn-share:hover { background: rgba(0,119,181,0.2); }
+
+    .output-text {
+      font-size: 1rem;
+      line-height: 1.85;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .output-footer {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .output-char-count { font-size: 0.82rem; color: var(--muted); }
+    .output-char-count span { color: var(--text); font-weight: 600; }
+
+    /* Loader */
+    .loader {
+      display: none;
+      margin: 24px auto;
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(0,119,181,0.25);
+      border-radius: 50%;
+      border-top-color: #0077b5;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Tips banner */
+    .tips-banner {
+      background: rgba(0,119,181,0.06);
+      border: 1px solid rgba(0,119,181,0.15);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+    .tips-banner h3 { font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+    .tips-banner ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 20px; }
+    .tips-banner li { font-size: 0.82rem; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+    .tips-banner li::before { content: '✓'; color: #0077b5; font-weight: 700; }
+
+    /* Toast */
+    .toast-msg {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      z-index: 999;
+      transition: transform 0.3s ease;
+    }
+    .toast-msg.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 600px) {
+      .voice-grid { grid-template-columns: 1fr; }
+      .output-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header>
+  <nav class="navbar" aria-label="Main navigation">
+    <a href="../index.html" class="nav-logo" aria-label="Naturize home">
+      <img src="/logo.png" alt="Naturize logo" width="30" height="30" style="border-radius:6px;object-fit:cover" />
+      <span>Natur<span>ize</span></span>
+    </a>
+    <div class="nav-links" role="list">
+      <a href="../index.html#tool" role="listitem">Humanizer</a>
+      <a href="../index.html#tool" role="listitem">Detector</a>
+      <div class="nav-dropdown" role="listitem">
+        <a href="#" style="cursor:default;" class="active">Generators ▾</a>
+        <div class="nav-dropdown-content">
+          <a href="assignment-generator.html">Assignment Generator</a>
+          <a href="email-composer.html">Email Composer</a>
+          <a href="cover-letter-generator.html">Cover Letter Generator</a>
+          <a href="writing-analyzer.html">Writing Analyzer</a>
+          <a href="linkedin-humanizer.html" class="active">LinkedIn Humanizer</a>
+          <a href="youtube-humanizer.html">YouTube Script Humanizer</a>
+        </div>
+      </div>
+      <a href="../index.html#features" role="listitem">Features</a>
+      <a href="../index.html#donate" role="listitem">Donate</a>
+    </div>
+    <div class="nav-right">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+        <svg class="icon-moon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Toggle mobile menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <nav class="mobile-menu" id="mobile-menu">
+    <a href="../index.html#tool">Humanizer</a>
+    <a href="../index.html#tool">Detector</a>
+    <a href="assignment-generator.html">Assignment Generator</a>
+    <a href="email-composer.html">Email Composer</a>
+    <a href="cover-letter-generator.html">Cover Letter Generator</a>
+    <a href="writing-analyzer.html">Writing Analyzer</a>
+    <a href="linkedin-humanizer.html" class="active">LinkedIn Humanizer</a>
+    <a href="youtube-humanizer.html">YouTube Script Humanizer</a>
+    <a href="../index.html#features">Features</a>
+    <a href="../index.html#donate">Donate</a>
+  </nav>
+</header>
+
+<!-- PAGE HEADER -->
+<section class="page-header">
+  <div class="page-badge">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+    LinkedIn Post Humanizer
+  </div>
+  <h1>Make Your LinkedIn Posts Sound <span>Human</span></h1>
+  <p>Rewrite AI-generated LinkedIn posts to sound authentic, personal, and native. Gets more engagement because it reads like a real person wrote it.</p>
+</section>
+
+<!-- TOOL -->
+<div class="tool-wrapper">
+
+  <div class="tips-banner">
+    <h3>💡 What makes a great LinkedIn post:</h3>
+    <ul>
+      <li>First line stops the scroll</li>
+      <li>Short paragraphs (1–2 sentences)</li>
+      <li>Personal voice with "I" and "we"</li>
+      <li>Ends with a real question</li>
+    </ul>
+  </div>
+
+  <div class="tool-panel">
+    <!-- Voice Style -->
+    <div class="form-group">
+      <label class="form-label">Choose Your Voice Style</label>
+      <div class="voice-grid">
+        <div class="voice-card selected" data-voice="thought-leader" onclick="selectVoice(this)">
+          <div class="voice-card-icon">🎯</div>
+          <div class="voice-card-title">Thought Leader</div>
+          <div class="voice-card-desc">Bold opinion, direct advice, professional authority</div>
+        </div>
+        <div class="voice-card" data-voice="storyteller" onclick="selectVoice(this)">
+          <div class="voice-card-icon">📖</div>
+          <div class="voice-card-title">Storyteller</div>
+          <div class="voice-card-desc">Personal narrative, what happened & what I learned</div>
+        </div>
+        <div class="voice-card" data-voice="casual" onclick="selectVoice(this)">
+          <div class="voice-card-icon">💬</div>
+          <div class="voice-card-title">Casual & Direct</div>
+          <div class="voice-card-desc">Short punchy sentences, no corporate speak</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="form-group">
+      <label class="form-label" for="postInput">Your AI-Generated LinkedIn Post</label>
+      <textarea id="postInput" class="form-textarea" placeholder="Paste your AI-written LinkedIn post here. Even rough bullet points work fine..." oninput="updateCharCount(this)"></textarea>
+      <div class="char-counter" id="charCounter">0 / 3,000 characters</div>
+    </div>
+
+    <button id="generateBtn" class="btn-generate" onclick="generate()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+      Humanize LinkedIn Post
+    </button>
+    <div class="loader" id="loader"></div>
+  </div>
+
+  <!-- Output -->
+  <div class="output-panel" id="outputPanel">
+    <div class="output-header">
+      <div class="output-badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Humanized — Ready to Post
+      </div>
+      <div class="output-actions">
+        <button class="btn-action btn-copy" onclick="copyText()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy Post
+        </button>
+        <button class="btn-action btn-share" onclick="shareProof()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share Proof
+        </button>
+      </div>
+    </div>
+    <div class="output-text" id="outputText"></div>
+    <div class="output-footer">
+      <div class="output-char-count">Output: <span id="outputCharCount">0</span> / 3,000 characters</div>
+      <div style="font-size:0.8rem;color:var(--muted);">✓ Optimized for LinkedIn reach</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer style="text-align:center; padding:40px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:0.9rem;">
+  <div style="margin-bottom:20px;">
+    <a href="https://rzp.io/rzp/naturize" target="_blank" rel="noopener" style="display:inline-block;background:var(--accent);color:#000;padding:10px 24px;border-radius:8px;font-weight:700;text-decoration:none;">Support Naturize ❤️</a>
+  </div>
+  <a href="../index.html" style="color:var(--accent);text-decoration:none;">← Back to Home</a>
+</footer>
+
+<div class="toast-msg" id="toast"></div>
+
+<script>
+  let selectedVoice = 'thought-leader';
+
+  function selectVoice(el) {
+    document.querySelectorAll('.voice-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedVoice = el.dataset.voice;
+  }
+
+  function updateCharCount(el) {
+    const len = el.value.length;
+    const counter = document.getElementById('charCounter');
+    counter.textContent = `${len.toLocaleString()} / 3,000 characters`;
+    counter.className = 'char-counter' + (len > 3000 ? ' over' : len > 2500 ? ' warn' : '');
+  }
+
+  async function generate() {
+    const post = document.getElementById('postInput').value.trim();
+    if (!post) { showToast('Please paste your LinkedIn post first.'); return; }
+    if (post.length > 3000) { showToast('Post exceeds 3,000 characters — LinkedIn\'s limit.'); return; }
+
+    document.getElementById('generateBtn').disabled = true;
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('outputPanel').style.display = 'none';
+
+    try {
+      const res = await fetch('/api/linkedin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ post, voice: selectedVoice })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+
+      document.getElementById('outputText').innerText = data.result;
+      document.getElementById('outputCharCount').textContent = data.result.length.toLocaleString();
+      document.getElementById('outputPanel').style.display = 'block';
+      document.getElementById('outputPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (err) {
+      showToast(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      document.getElementById('generateBtn').disabled = false;
+      document.getElementById('loader').style.display = 'none';
+    }
+  }
+
+  function copyText() {
+    const text = document.getElementById('outputText').innerText;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => showToast('✓ Copied to clipboard!'));
+  }
+
+  async function shareProof() {
+    const text = document.getElementById('outputText').innerText;
+    if (!text) return;
+    try {
+      const payload = JSON.stringify({ text, date: new Date().toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }) });
+      const b64 = btoa(encodeURIComponent(payload));
+      const proofUrl = `${window.location.origin}/proof.html#data=${b64}`;
+      await navigator.clipboard.writeText(proofUrl);
+      showToast('✓ Proof link copied! Share it to prove authenticity.');
+    } catch(e) { showToast('Could not generate proof link.'); }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Mobile menu
+  document.getElementById('hamburger').addEventListener('click', function() {
+    this.classList.toggle('open');
+    document.getElementById('mobile-menu').classList.toggle('open');
+  });
+
+  // Theme toggle
+  (function(){
+    const saved = localStorage.getItem('nz_theme') || 'dark';
+    if (saved === 'light') document.documentElement.classList.add('light');
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.addEventListener('click', function(){
+      const isLight = document.documentElement.classList.toggle('light');
+      localStorage.setItem('nz_theme', isLight ? 'light' : 'dark');
+    });
+  })();
+</script>
+</body>
+</html>
