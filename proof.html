@@ -26,7 +26,7 @@
     .cert-nav {
       padding: 20px 0;
       border-bottom: 1px solid var(--border);
-      background: rgba(14, 14, 16, 0.8);
+      background: var(--bg);
       backdrop-filter: blur(10px);
       position: sticky;
       top: 0;
@@ -246,17 +246,17 @@
     // Theme toggle logic
     const themeToggle = document.getElementById('theme-toggle');
     const htmlEl = document.documentElement;
-    const savedTheme = localStorage.getItem('theme');
+    const savedTheme = localStorage.getItem('nz_theme') || 'dark';
 
     if (savedTheme === 'light') {
-      htmlEl.classList.remove('dark');
+      htmlEl.classList.add('light');
     }
 
     if (themeToggle) {
       themeToggle.addEventListener('click', () => {
-        htmlEl.classList.toggle('dark');
-        const isDark = htmlEl.classList.contains('dark');
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        htmlEl.classList.toggle('light');
+        const isLight = htmlEl.classList.contains('light');
+        localStorage.setItem('nz_theme', isLight ? 'light' : 'dark');
       });
     }
 
