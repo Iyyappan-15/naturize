@@ -13,3 +13,7 @@ node_modules/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Private consulting reports — local only, never push to GitHub
+consulting_reports/
+Naturize.txt
