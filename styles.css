@@ -1044,7 +1044,7 @@ html.light .tone-select option { background: #fff; }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: 0;
 }
 .proof-score-num {
   font-size: 1.6rem;
@@ -1054,11 +1054,12 @@ html.light .tone-select option { background: #fff; }
   color: var(--text);
 }
 .proof-score-unit {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--muted);
-  align-self: flex-start;
-  margin-top: 4px;
+  line-height: 1;
+  margin-top: 2px;
+  align-self: center;
 }
 
 .proof-score-meta {
