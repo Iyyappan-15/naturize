@@ -924,56 +924,124 @@ html.light .tone-select option { background: #fff; }
 /* ══════════════════════════════════════════════════════
    PROOF SECTION (Before / After)
 ══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   PROOF SECTION (Before / After Transformation) - GOD MODE UI
+══════════════════════════════════════════════════════ */
 .proof-section {
-  padding: 80px 24px 60px;
+  padding: 100px 24px 80px;
+  position: relative;
   overflow: hidden;
-}
-.proof-subtitle {
-  text-align: center;
-  max-width: 500px;
-  margin: 0 auto 52px;
-  font-size: 1rem;
-}
-.section-title {
-  text-align: center;
-  margin-bottom: 12px;
+  background: radial-gradient(circle at 50% 30%, rgba(13, 17, 23, 0.8) 0%, var(--bg) 100%);
 }
 
-/* Grid: [before card] [arrow] [after card] */
+/* Ambient Background Light Orbs */
+.proof-glow {
+  position: absolute;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(90px);
+  opacity: 0.18;
+  z-index: 0;
+}
+.proof-glow--danger {
+  top: 15%;
+  left: 5%;
+  background: #ff5c7a;
+}
+.proof-glow--success {
+  bottom: 10%;
+  right: 5%;
+  background: var(--accent);
+}
+
+.section-label--glow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 229, 192, 0.08);
+  border: 1px solid rgba(0, 229, 192, 0.25);
+  color: var(--accent);
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  box-shadow: 0 0 20px rgba(0, 229, 192, 0.15);
+}
+
+.proof-subtitle {
+  text-align: center;
+  max-width: 580px;
+  margin: 0 auto 56px;
+  font-size: 1.05rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* Grid layout */
 .proof-grid {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  gap: 24px;
-  align-items: center;
-  max-width: 900px;
+  gap: 28px;
+  align-items: stretch;
+  max-width: 1020px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 /* ── Cards ── */
 .proof-card {
-  background: var(--surface);
+  background: rgba(18, 22, 31, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 28px 24px 20px;
+  border-radius: 20px;
+  padding: 32px 28px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   position: relative;
-  transition: transform 0.28s ease, box-shadow 0.28s ease;
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.proof-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-}
-.proof-card--before {
-  border-color: rgba(255, 92, 122, 0.2);
-}
-.proof-card--after {
-  border-color: rgba(0, 229, 192, 0.2);
+.proof-card__glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
 
-/* ── Card Header ── */
+.proof-card--before {
+  border-color: rgba(255, 92, 122, 0.25);
+  box-shadow: 0 10px 40px -15px rgba(255, 92, 122, 0.12);
+}
+.proof-card--before:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255, 92, 122, 0.5);
+  box-shadow: 0 20px 50px -15px rgba(255, 92, 122, 0.25);
+}
+
+.proof-card--after {
+  border-color: rgba(0, 229, 192, 0.3);
+  box-shadow: 0 10px 40px -15px rgba(0, 229, 192, 0.15);
+}
+.proof-card--after:hover {
+  transform: translateY(-6px);
+  border-color: rgba(0, 229, 192, 0.6);
+  box-shadow: 0 20px 50px -15px rgba(0, 229, 192, 0.3);
+}
+
+/* ── Card Header & Badges ── */
 .proof-card__header {
   display: flex;
   align-items: center;
@@ -981,26 +1049,47 @@ html.light .tone-select option { background: #fff; }
   width: 100%;
 }
 .proof-detector-label {
-  font-size: .75rem;
+  font-size: 0.76rem;
+  font-weight: 600;
   color: var(--muted);
-  letter-spacing: .04em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-/* ── Badges ── */
 .proof-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: .78rem;
-  font-weight: 600;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
   border-radius: 100px;
-  padding: 5px 12px;
-  letter-spacing: .03em;
+  padding: 6px 14px;
 }
+.proof-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.proof-badge__dot--danger {
+  background: #ff5c7a;
+  box-shadow: 0 0 8px #ff5c7a;
+  animation: pulseDot 2s infinite;
+}
+.proof-badge__dot--success {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulseDot 2s infinite;
+}
+@keyframes pulseDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+}
+
 .proof-badge--ai {
-  background: rgba(255, 92, 122, 0.15);
+  background: rgba(255, 92, 122, 0.12);
   color: #ff5c7a;
-  border: 1px solid rgba(255, 92, 122, 0.35);
+  border: 1px solid rgba(255, 92, 122, 0.3);
 }
 .proof-badge--human {
   background: rgba(0, 229, 192, 0.12);
@@ -1011,32 +1100,35 @@ html.light .tone-select option { background: #fff; }
 /* ── Score Rings ── */
 .proof-score-ring {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 124px;
+  height: 124px;
   flex-shrink: 0;
+  margin: 6px 0;
 }
 .ring-svg {
   transform: rotate(-90deg);
+  overflow: visible;
 }
 .ring-bg {
   fill: none;
-  stroke: var(--surface2);
-  stroke-width: 10;
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 9;
 }
 .ring-fill {
   fill: none;
-  stroke-width: 10;
+  stroke-width: 9;
   stroke-linecap: round;
   transition: stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .ring-fill--danger {
   stroke: #ff5c7a;
-  filter: drop-shadow(0 0 8px rgba(255, 92, 122, 0.5));
+  filter: drop-shadow(0 0 10px rgba(255, 92, 122, 0.6));
 }
 .ring-fill--success {
   stroke: var(--accent);
-  filter: drop-shadow(0 0 8px var(--accent-glow));
+  filter: drop-shadow(0 0 10px rgba(0, 229, 192, 0.7));
 }
+
 .proof-score-inner {
   position: absolute;
   inset: 0;
@@ -1044,143 +1136,244 @@ html.light .tone-select option { background: #fff; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0;
 }
 .proof-score-num {
   font-family: var(--font-head);
-  font-size: 2.2rem;
-  font-weight: 700;
+  font-size: 2.4rem;
+  font-weight: 800;
   line-height: 1;
-  color: var(--text);
+  letter-spacing: -0.02em;
+}
+.proof-score-num--danger {
+  color: #ff5c7a;
+  text-shadow: 0 0 16px rgba(255, 92, 122, 0.4);
+}
+.proof-score-num--success {
+  color: var(--accent);
+  text-shadow: 0 0 16px rgba(0, 229, 192, 0.5);
 }
 .proof-score-pct {
-  font-size: .85rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--muted);
-  margin-top: 1px;
 }
 .proof-score-label {
-  font-size: .68rem;
-  font-weight: 600;
-  letter-spacing: .1em;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
+  margin-top: 2px;
 }
 
 /* ── Verdicts ── */
 .proof-verdict {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: .82rem;
-  font-weight: 600;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
   border-radius: 100px;
-  padding: 6px 14px;
+  padding: 8px 18px;
+  width: 100%;
+  justify-content: center;
 }
 .proof-verdict--fail {
   background: rgba(255, 92, 122, 0.12);
   color: #ff5c7a;
-  border: 1px solid rgba(255, 92, 122, 0.3);
+  border: 1px solid rgba(255, 92, 122, 0.35);
+  box-shadow: inset 0 0 12px rgba(255, 92, 122, 0.1);
 }
 .proof-verdict--pass {
-  background: rgba(0, 229, 192, 0.1);
+  background: rgba(0, 229, 192, 0.12);
   color: var(--accent);
-  border: 1px solid rgba(0, 229, 192, 0.28);
+  border: 1px solid rgba(0, 229, 192, 0.35);
+  box-shadow: inset 0 0 12px rgba(0, 229, 192, 0.1);
 }
 
-/* ── Text Previews ── */
+/* ── Code/Text Inspector Box ── */
 .proof-text-preview {
-  background: var(--surface2);
+  background: rgba(10, 13, 20, 0.85);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 14px 16px;
+  border-radius: 12px;
+  padding: 14px 18px 18px;
   width: 100%;
+  flex-grow: 1;
+  text-align: left;
 }
-.proof-text-preview p {
-  font-size: .82rem;
-  line-height: 1.65;
+.proof-text-preview--danger {
+  border-color: rgba(255, 92, 122, 0.2);
+}
+.proof-text-preview--success {
+  border-color: rgba(0, 229, 192, 0.2);
+}
+
+.preview-window-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.win-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.win-dot--red { background: #ff5f56; }
+.win-dot--yellow { background: #ffbd2e; }
+.win-dot--green { background: #27c93f; }
+.preview-window-title {
+  margin-left: 6px;
+  font-size: 0.72rem;
+  font-family: monospace;
   color: var(--muted);
+  opacity: 0.7;
 }
+
+.proof-text-preview p {
+  font-size: 0.86rem;
+  line-height: 1.7;
+  color: #c9d1d9;
+}
+
 /* AI cliché highlights */
 mark.ai-word {
-  background: rgba(255, 92, 122, 0.22);
+  background: rgba(255, 92, 122, 0.25);
   color: #ff8fa3;
-  border-radius: 3px;
-  padding: 1px 3px;
+  border: 1px solid rgba(255, 92, 122, 0.4);
+  border-radius: 4px;
+  padding: 1px 5px;
   font-style: normal;
+  font-weight: 500;
 }
+
 .proof-text-tag {
-  font-size: .75rem;
-  font-weight: 600;
-  color: #ff5c7a;
-  letter-spacing: .03em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   text-align: center;
+}
+.proof-text-tag--danger {
+  color: #ff5c7a;
 }
 .proof-text-tag--clean {
   color: var(--accent);
 }
 
-/* ── Divider Arrow ── */
+/* ── Center Lightning Bridge Connector ── */
 .proof-arrow {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  position: relative;
 }
 .proof-arrow__icon {
-  width: 48px;
-  height: 48px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
-  background: var(--accent-dim);
-  border: 1px solid rgba(0, 229, 192, 0.2);
+  background: rgba(0, 229, 192, 0.12);
+  border: 1.5px solid rgba(0, 229, 192, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--accent);
+  box-shadow: 0 0 24px rgba(0, 229, 192, 0.3);
+  animation: pulseGlow 2.5s infinite;
+  z-index: 2;
 }
-.proof-arrow span {
-  font-size: .72rem;
-  font-weight: 700;
+.proof-arrow__brand {
+  font-size: 0.7rem;
+  font-weight: 800;
   color: var(--accent);
-  letter-spacing: .08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-}
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0,229,192,0.3); }
-  50%       { box-shadow: 0 0 0 12px rgba(0,229,192,0); }
+  background: rgba(0, 229, 192, 0.1);
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 229, 192, 0.25);
 }
 
-/* ── Demo CTA ── */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 229, 192, 0.4); transform: scale(1); }
+  50% { box-shadow: 0 0 0 14px rgba(0, 229, 192, 0); transform: scale(1.05); }
+}
+
+/* ── Demo CTA Button ── */
 .proof-demo-cta {
-  margin-top: 48px;
+  margin-top: 56px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
 }
 .proof-demo-label {
-  font-size: .95rem;
-  color: var(--muted);
-  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
 }
+.btn--glow {
+  box-shadow: 0 0 30px rgba(0, 229, 192, 0.35);
+  transition: all 0.3s ease;
+}
+.btn--glow:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 45px rgba(0, 229, 192, 0.55);
+}
+.proof-demo-note {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  .proof-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .proof-arrow {
+    transform: rotate(90deg);
+    margin: -10px 0;
+  }
+  .proof-arrow__brand {
+    transform: rotate(-90deg);
+  }
+}
+/* ── Gradient Heading Text ── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent) 0%, #7fffd4 50%, #00bfff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Shared Button Sizes ── */
 .btn--lg {
   padding: 16px 36px;
   font-size: 1.05rem;
   border-radius: 12px;
 }
-.proof-demo-note {
-  font-size: .78rem;
-  color: var(--muted);
-  opacity: .7;
-}
 
 /* ══════════════════════════════════════════════════════
    LIGHT THEME OVERRIDES — Proof Section
 ══════════════════════════════════════════════════════ */
+html.light .proof-section {
+  background: radial-gradient(circle at 50% 30%, rgba(240,250,248,0.9) 0%, var(--bg) 100%);
+}
+html.light .proof-glow { opacity: 0.08; }
 html.light .proof-card {
-  background: #fff;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.07);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
 }
 html.light .proof-card--before { border-color: rgba(220,38,38,0.3); }
 html.light .proof-card--after  { border-color: rgba(5,150,105,0.3); }
@@ -1188,16 +1381,18 @@ html.light .proof-badge--ai    { background: rgba(220,38,38,0.08); color: #dc262
 html.light .proof-badge--human { background: rgba(5,150,105,0.08); color: #059669; border-color: rgba(5,150,105,0.3); }
 html.light .proof-verdict--fail{ background: rgba(220,38,38,0.08); color: #dc2626; border-color: rgba(220,38,38,0.3); }
 html.light .proof-verdict--pass{ background: rgba(5,150,105,0.08); color: #059669; border-color: rgba(5,150,105,0.3); }
-html.light .ring-fill--danger  { stroke: #dc2626; }
-html.light .ring-fill--success { stroke: #059669; }
-html.light mark.ai-word        { background: rgba(220,38,38,0.15); color: #b91c1c; }
-html.light .proof-text-tag     { color: #dc2626; }
-html.light .proof-text-tag--clean { color: #059669; }
-html.light .proof-arrow__icon  { background: rgba(5,150,105,0.1); border-color: rgba(5,150,105,0.3); color: #059669; }
-html.light .proof-arrow span   { color: #059669; }
-html.light .proof-text-preview { background: #f9fafb; border-color: rgba(0,0,0,0.08); }
-html.light .proof-score-num    { color: #0e0e10; }
+html.light .ring-fill--danger  { stroke: #dc2626; filter: none; }
+html.light .ring-fill--success { stroke: #059669; filter: none; }
+html.light mark.ai-word        { background: rgba(220,38,38,0.15); color: #b91c1c; border-color: rgba(220,38,38,0.3); }
+html.light .proof-text-tag--danger { color: #dc2626; }
+html.light .proof-text-tag--clean  { color: #059669; }
+html.light .proof-arrow__icon  { background: rgba(5,150,105,0.1); border-color: rgba(5,150,105,0.3); color: #059669; box-shadow: none; }
+html.light .proof-arrow__brand { background: rgba(5,150,105,0.1); border-color: rgba(5,150,105,0.25); color: #059669; }
+html.light .proof-text-preview { background: #f4f6f8; border-color: rgba(0,0,0,0.08); }
+html.light .proof-score-num--danger { color: #dc2626; text-shadow: none; }
+html.light .proof-score-num--success { color: #059669; text-shadow: none; }
 html.light .hero__trust span   { color: #374151; }
+html.light .section-label--glow { background: rgba(5,150,105,0.08); border-color: rgba(5,150,105,0.25); color: #059669; box-shadow: none; }
 
 /* ══════════════════════════════════════════════════════
    RESPONSIVE — Proof Section
