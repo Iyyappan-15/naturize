@@ -216,8 +216,14 @@ section{position:relative}
 .feature-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;transition:var(--transition);cursor:default}
 .feature-card:hover{transform:translateY(-5px);border-color:rgba(0,229,192,0.2);box-shadow:0 20px 60px rgba(0,0,0,0.4),0 0 0 1px rgba(0,229,192,0.1)}
 .feature-icon{width:52px;height:52px;border-radius:14px;background:var(--accent-dim);border:1px solid rgba(0,229,192,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:18px;color:var(--accent)}
+.feature-icon--danger{background:rgba(255,92,122,0.08);border-color:rgba(255,92,122,0.2);color:#ff5c7a}
 .feature-card h3{font-size:1.05rem;margin-bottom:8px}
-.feature-card p{font-size:.9rem;color:var(--muted)}
+.feature-card p{font-size:.9rem;color:var(--muted);margin-bottom:14px}
+.feature-card__link{display:inline-flex;align-items:center;font-size:.82rem;font-weight:700;color:var(--accent);text-decoration:none;letter-spacing:.02em;transition:opacity .2s}
+.feature-card__link:hover{opacity:.7}
+.feature-card__link--danger{color:#ff5c7a}
+
+
 
 /* ── PRICING ── */
 .pricing-section{padding:80px 24px}
