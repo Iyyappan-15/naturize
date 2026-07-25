@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhatsApp Message Humanizer — Make AI Text Sound Like You | Naturize</title>
+  <meta name="description" content="Instantly convert stiff, formal AI text into natural, casual WhatsApp messages. Perfect for chatting with friends, family, or colleagues." />
+  <meta name="keywords" content="WhatsApp humanizer, AI to WhatsApp, make AI text casual, humanize AI message, WhatsApp AI writer" />
+  <meta name="robots" content="index, follow" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    /* Tool specific overrides */
+    .page-header { text-align: center; padding: 60px 20px 40px; background: radial-gradient(ellipse at 50% 0%, rgba(37, 211, 102, 0.08) 0%, transparent 70%); }
+    .page-header h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; margin-bottom: 14px; line-height: 1.2; }
+    .page-header h1 span { color: #25D366; } /* WhatsApp Green */
+    .page-header p { color: var(--muted); font-size: 1.05rem; max-width: 600px; margin: 0 auto; line-height: 1.7; }
+    
+    .tool-wrapper { max-width: 800px; margin: 0 auto; padding: 0 20px 60px; }
+    .tool-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 30px; margin-bottom: 24px; }
+    
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+    .form-input, .form-select, .form-textarea { width: 100%; padding: 12px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 1rem; }
+    .form-textarea { min-height: 150px; resize: vertical; line-height: 1.5; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: #25D366; }
+    
+    .toggles-row { display: flex; gap: 20px; margin-bottom: 20px; }
+    .toggle-label { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; color: var(--text); cursor: pointer; }
+    
+    .btn-generate { width: 100%; padding: 14px; background: #25D366; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .btn-generate:hover { opacity: 0.85; }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .output-panel { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; min-height: 150px; display: none; }
+    /* Style output like a WhatsApp bubble */
+    .whatsapp-bubble { background: #005c4b; color: #fff; padding: 12px 16px; border-radius: 12px; border-top-right-radius: 0; max-width: 80%; float: right; font-size: 0.95rem; line-height: 1.5; white-space: pre-wrap; margin-bottom: 16px; clear: both; }
+    .light .whatsapp-bubble { background: #d9fdd3; color: #111; }
+    
+    .btn-copy { clear: both; margin-top: 16px; padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text); border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; display: block; width: fit-content; }
+    .btn-copy:hover { background: rgba(255,255,255,0.1); }
+    
+    .loader { display: none; margin: 20px auto; width: 30px; height: 30px; border: 3px solid rgba(37,211,102,0.3); border-radius: 50%; border-top-color: #25D366; animation: spin 1s ease-in-out infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header>
+  <nav class="navbar" aria-label="Main navigation">
+    <a href="../index.html" class="nav-logo" aria-label="Naturize home">
+      <img src="/logo.png" alt="Naturize logo" width="30" height="30" style="border-radius:6px;object-fit:cover" />
+      <span>Natur<span>ize</span></span>
+    </a>
+    <div class="nav-links" role="list">
+      <a href="../index.html#tool" role="listitem">Humanizer</a>
+      <a href="../index.html#tool" role="listitem">Detector</a>
+      <div class="nav-dropdown" role="listitem">
+        <a href="#" style="cursor: default;" class="active">Generators ▾</a>
+          <div class="nav-dropdown-content">
+            <a href="assignment-generator.html">Assignment Generator</a>
+            <a href="email-composer.html">Email Composer</a>
+            <a href="cover-letter-generator.html">Cover Letter Generator</a>
+            <a href="writing-analyzer.html">Writing Analyzer</a>
+            <a href="linkedin-humanizer.html">LinkedIn Humanizer</a>
+            <a href="youtube-humanizer.html">YouTube Script Humanizer</a>
+            <a href="whatsapp-humanizer.html" class="active">WhatsApp Humanizer</a>
+            <a href="fake-review-detector.html">Fake Review Detector</a>
+          </div>
+      </div>
+      <a href="../index.html#features" role="listitem">Features</a>
+      <a href="../index.html#donate" role="listitem">Donate</a>
+    </div>
+    <div class="nav-right">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+        <svg class="icon-moon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Toggle mobile menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <nav class="mobile-menu" id="mobile-menu">
+    <a href="../index.html#tool">Humanizer</a>
+    <a href="../index.html#tool">Detector</a>
+    <a href="assignment-generator.html">Assignment Generator</a>
+    <a href="email-composer.html">Email Composer</a>
+    <a href="cover-letter-generator.html">Cover Letter Generator</a>
+    <a href="writing-analyzer.html">Writing Analyzer</a>
+    <a href="linkedin-humanizer.html">LinkedIn Humanizer</a>
+    <a href="youtube-humanizer.html">YouTube Script Humanizer</a>
+    <a href="whatsapp-humanizer.html" class="active">WhatsApp Humanizer</a>
+    <a href="fake-review-detector.html">Fake Review Detector</a>
+    <a href="../index.html#features">Features</a>
+  </nav>
+</header>
+
+<!-- PAGE HEADER -->
+<section class="page-header">
+  <h1>WhatsApp <span>Humanizer</span></h1>
+  <p>Convert stiff, formal AI text into natural, casual WhatsApp messages.</p>
+</section>
+
+<!-- MAIN CONTENT -->
+<div class="tool-wrapper">
+  <div class="tool-panel">
+    <div class="form-group">
+      <label class="form-label" for="vibeInput">Vibe / Recipient</label>
+      <select id="vibeInput" class="form-select">
+        <option value="Casual & Friendly" selected>Casual & Friendly (Friends)</option>
+        <option value="Professional">Professional (Colleagues / Boss)</option>
+        <option value="Family">Family (Parents / Relatives)</option>
+      </select>
+    </div>
+
+    <div class="toggles-row">
+      <label class="toggle-label">
+        <input type="checkbox" id="emojisToggle" checked> Use Emojis
+      </label>
+      <label class="toggle-label">
+        <input type="checkbox" id="slangToggle"> Use Slang / Abbreviations
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="textInput">Paste your formal/AI message here</label>
+      <textarea id="textInput" class="form-textarea" placeholder="e.g.&#10;I hope this message finds you well. I am writing to inquire if you would be available for a brief meeting tomorrow to discuss our upcoming project."></textarea>
+    </div>
+    
+    <button id="generateBtn" class="btn-generate" onclick="generate()">Humanize for WhatsApp</button>
+    <div class="loader" id="loader"></div>
+  </div>
+  
+  <div class="output-panel" id="outputPanel">
+    <div style="overflow: hidden;">
+      <div class="whatsapp-bubble" id="outputText"></div>
+    </div>
+    <button class="btn-copy" onclick="copyText()">Copy Message</button>
+  </div>
+</div>
+
+<footer style="text-align: center; padding: 40px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem;">
+  <a href="../index.html" style="color:#25D366; text-decoration:none; font-weight: 600;">← Back to Home</a>
+</footer>
+
+<script>
+  document.getElementById('hamburger').addEventListener('click', function() {
+    this.classList.toggle('open');
+    document.getElementById('mobile-menu').classList.toggle('open');
+  });
+
+  async function generate() {
+    const text = document.getElementById('textInput').value.trim();
+    if (!text) return alert('Please enter the message you want to humanize.');
+    
+    const vibe = document.getElementById('vibeInput').value;
+    const emojis = document.getElementById('emojisToggle').checked;
+    const slang = document.getElementById('slangToggle').checked;
+    
+    document.getElementById('generateBtn').disabled = true;
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('outputPanel').style.display = 'none';
+    
+    try {
+      const res = await fetch('/api/whatsapp-humanizer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, vibe, emojis, slang })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+      
+      document.getElementById('outputText').innerText = data.result;
+      document.getElementById('outputPanel').style.display = 'block';
+    } catch (err) {
+      alert(err.message || 'Something went wrong.');
+    } finally {
+      document.getElementById('generateBtn').disabled = false;
+      document.getElementById('loader').style.display = 'none';
+    }
+  }
+  
+  function copyText() {
+    const text = document.getElementById('outputText').innerText;
+    navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!'));
+  }
+
+  (function(){
+    const saved = localStorage.getItem('nz_theme') || 'dark';
+    if(saved === 'light') document.documentElement.classList.add('light');
+    const btn = document.getElementById('theme-toggle');
+    if(btn) btn.addEventListener('click', function(){
+      const isLight = document.documentElement.classList.toggle('light');
+      localStorage.setItem('nz_theme', isLight ? 'light' : 'dark');
+    });
+  })();
+</script>
+</body>
+</html>

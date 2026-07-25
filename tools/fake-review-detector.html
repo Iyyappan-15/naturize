@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fake Review Detector — AI Review Analyzer | Naturize</title>
+  <meta name="description" content="Instantly analyze product reviews (Amazon, Zomato, etc.) to see if they are fake or AI-generated. Get a detailed breakdown of red flags." />
+  <meta name="keywords" content="fake review detector, check AI review, is this review fake, Amazon fake review checker, AI detection tool" />
+  <meta name="robots" content="index, follow" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    /* Tool specific overrides */
+    .page-header { text-align: center; padding: 60px 20px 40px; background: radial-gradient(ellipse at 50% 0%, rgba(255, 69, 58, 0.08) 0%, transparent 70%); }
+    .page-header h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; margin-bottom: 14px; line-height: 1.2; }
+    .page-header h1 span { color: #ff453a; }
+    .page-header p { color: var(--muted); font-size: 1.05rem; max-width: 600px; margin: 0 auto; line-height: 1.7; }
+    
+    .tool-wrapper { max-width: 800px; margin: 0 auto; padding: 0 20px 60px; }
+    .tool-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 30px; margin-bottom: 24px; }
+    
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+    .form-textarea { width: 100%; padding: 12px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 1rem; min-height: 150px; resize: vertical; line-height: 1.5; }
+    .form-textarea:focus { outline: none; border-color: #ff453a; }
+    
+    .btn-generate { width: 100%; padding: 14px; background: #ff453a; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .btn-generate:hover { opacity: 0.85; }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .output-panel { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 24px; display: none; }
+    
+    .score-container { text-align: center; margin-bottom: 24px; }
+    .score-circle { display: inline-flex; align-items: center; justify-content: center; width: 120px; height: 120px; border-radius: 50%; font-size: 2.5rem; font-weight: 700; border: 6px solid #333; margin-bottom: 12px; }
+    .score-label { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+    
+    .explanation-box { background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.95rem; line-height: 1.6; border-left: 4px solid var(--border); }
+    .light .explanation-box { background: rgba(0,0,0,0.05); }
+    
+    .signals-list { list-style: none; padding: 0; margin: 0; }
+    .signals-list li { position: relative; padding-left: 24px; margin-bottom: 10px; font-size: 0.95rem; color: var(--text); }
+    .signals-list li::before { content: '🚩'; position: absolute; left: 0; top: 0; }
+    
+    .disclaimer { font-size: 0.8rem; color: var(--muted); margin-top: 24px; text-align: center; }
+    
+    .loader { display: none; margin: 20px auto; width: 30px; height: 30px; border: 3px solid rgba(255, 69, 58, 0.3); border-radius: 50%; border-top-color: #ff453a; animation: spin 1s ease-in-out infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header>
+  <nav class="navbar" aria-label="Main navigation">
+    <a href="../index.html" class="nav-logo" aria-label="Naturize home">
+      <img src="/logo.png" alt="Naturize logo" width="30" height="30" style="border-radius:6px;object-fit:cover" />
+      <span>Natur<span>ize</span></span>
+    </a>
+    <div class="nav-links" role="list">
+      <a href="../index.html#tool" role="listitem">Humanizer</a>
+      <a href="../index.html#tool" role="listitem">Detector</a>
+      <div class="nav-dropdown" role="listitem">
+        <a href="#" style="cursor: default;" class="active">Generators ▾</a>
+          <div class="nav-dropdown-content">
+            <a href="assignment-generator.html">Assignment Generator</a>
+            <a href="email-composer.html">Email Composer</a>
+            <a href="cover-letter-generator.html">Cover Letter Generator</a>
+            <a href="writing-analyzer.html">Writing Analyzer</a>
+            <a href="linkedin-humanizer.html">LinkedIn Humanizer</a>
+            <a href="youtube-humanizer.html">YouTube Script Humanizer</a>
+            <a href="whatsapp-humanizer.html">WhatsApp Humanizer</a>
+            <a href="fake-review-detector.html" class="active">Fake Review Detector</a>
+          </div>
+      </div>
+      <a href="../index.html#features" role="listitem">Features</a>
+      <a href="../index.html#donate" role="listitem">Donate</a>
+    </div>
+    <div class="nav-right">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+        <svg class="icon-moon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Toggle mobile menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <nav class="mobile-menu" id="mobile-menu">
+    <a href="../index.html#tool">Humanizer</a>
+    <a href="../index.html#tool">Detector</a>
+    <a href="assignment-generator.html">Assignment Generator</a>
+    <a href="email-composer.html">Email Composer</a>
+    <a href="cover-letter-generator.html">Cover Letter Generator</a>
+    <a href="writing-analyzer.html">Writing Analyzer</a>
+    <a href="linkedin-humanizer.html">LinkedIn Humanizer</a>
+    <a href="youtube-humanizer.html">YouTube Script Humanizer</a>
+    <a href="whatsapp-humanizer.html">WhatsApp Humanizer</a>
+    <a href="fake-review-detector.html" class="active">Fake Review Detector</a>
+    <a href="../index.html#features">Features</a>
+  </nav>
+</header>
+
+<!-- PAGE HEADER -->
+<section class="page-header">
+  <h1>Fake <span>Review Detector</span></h1>
+  <p>Paste an Amazon or Zomato review to see if it was written by AI.</p>
+</section>
+
+<!-- MAIN CONTENT -->
+<div class="tool-wrapper">
+  <div class="tool-panel">
+    <div class="form-group">
+      <label class="form-label" for="reviewInput">Paste the product/service review here</label>
+      <textarea id="reviewInput" class="form-textarea" placeholder="e.g.&#10;This product is an absolute game-changer. It seamlessly integrates into my daily routine and has exceeded all my expectations..."></textarea>
+    </div>
+    
+    <button id="generateBtn" class="btn-generate" onclick="detectReview()">Analyze Review</button>
+    <div class="loader" id="loader"></div>
+  </div>
+  
+  <div class="output-panel" id="outputPanel">
+    <div class="score-container">
+      <div class="score-circle" id="scoreCircle">0%</div>
+      <div class="score-label" id="scoreLabel">Likelihood of AI</div>
+    </div>
+    
+    <div class="explanation-box" id="explanationText" style="border-left-color: #ff453a;">
+      <!-- Explanation goes here -->
+    </div>
+    
+    <h3 style="font-size: 1rem; margin-bottom: 12px; color: var(--muted);">Detected Signals:</h3>
+    <ul class="signals-list" id="signalsList">
+      <!-- Signals go here -->
+    </ul>
+    
+    <div class="disclaimer">
+      Disclaimer: This tool detects common AI writing patterns. Humans occasionally write in ways that trigger these flags. Use this as a guide, not absolute proof.
+    </div>
+  </div>
+</div>
+
+<footer style="text-align: center; padding: 40px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem;">
+  <a href="../index.html" style="color:#ff453a; text-decoration:none; font-weight: 600;">← Back to Home</a>
+</footer>
+
+<script>
+  document.getElementById('hamburger').addEventListener('click', function() {
+    this.classList.toggle('open');
+    document.getElementById('mobile-menu').classList.toggle('open');
+  });
+
+  async function detectReview() {
+    const review = document.getElementById('reviewInput').value.trim();
+    if (!review) return alert('Please paste a review to analyze.');
+    
+    document.getElementById('generateBtn').disabled = true;
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('outputPanel').style.display = 'none';
+    
+    try {
+      const res = await fetch('/api/fake-review-detector', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ review })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+      
+      // Update UI
+      const score = data.score;
+      const circle = document.getElementById('scoreCircle');
+      circle.innerText = score + '%';
+      
+      let color = '#00E5C0'; // Green
+      let label = 'Likely Human';
+      if (score > 40) { color = '#f5a623'; label = 'Suspicious'; }
+      if (score > 80) { color = '#ff453a'; label = 'Likely AI'; }
+      
+      circle.style.borderColor = color;
+      circle.style.color = color;
+      document.getElementById('scoreLabel').innerText = label;
+      
+      document.getElementById('explanationText').innerText = data.explanation;
+      document.getElementById('explanationText').style.borderLeftColor = color;
+      
+      const signalsList = document.getElementById('signalsList');
+      signalsList.innerHTML = '';
+      if (data.signals && data.signals.length > 0) {
+        data.signals.forEach(signal => {
+          const li = document.createElement('li');
+          li.innerText = signal;
+          signalsList.appendChild(li);
+        });
+      } else {
+        signalsList.innerHTML = '<li>No obvious AI signals detected.</li>';
+      }
+      
+      document.getElementById('outputPanel').style.display = 'block';
+    } catch (err) {
+      alert(err.message || 'Something went wrong.');
+    } finally {
+      document.getElementById('generateBtn').disabled = false;
+      document.getElementById('loader').style.display = 'none';
+    }
+  }
+
+  (function(){
+    const saved = localStorage.getItem('nz_theme') || 'dark';
+    if(saved === 'light') document.documentElement.classList.add('light');
+    const btn = document.getElementById('theme-toggle');
+    if(btn) btn.addEventListener('click', function(){
+      const isLight = document.documentElement.classList.toggle('light');
+      localStorage.setItem('nz_theme', isLight ? 'light' : 'dark');
+    });
+  })();
+</script>
+</body>
+</html>
