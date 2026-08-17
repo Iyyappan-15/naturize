@@ -113,7 +113,7 @@ STRICT WRITING RULES:
   });
 
   try {
-    let apiRes = await makeRequest("llama-3.3-70b-versatile");
+    let apiRes = await makeRequest("llama-4-scout-17b-16e-instruct");
 
     if (!apiRes.ok) {
       console.error("70b model failed, falling back to 8b...");

@@ -72,7 +72,7 @@ FORMATTING (CRITICAL):
   });
 
   try {
-    let apiRes = await makeRequest("llama-3.3-70b-versatile");
+    let apiRes = await makeRequest("llama-4-scout-17b-16e-instruct");
 
     if (!apiRes.ok) {
       const errText = await apiRes.clone().text();

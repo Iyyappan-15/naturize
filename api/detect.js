@@ -333,7 +333,7 @@ ${numberedSentences}
         })
       });
 
-    let apiRes = await makeRequest("llama-3.3-70b-versatile");
+    let apiRes = await makeRequest("llama-4-scout-17b-16e-instruct");
     if (!apiRes.ok) {
       console.log("70b failed, falling back to 8b...");
       apiRes = await makeRequest("llama-3.1-8b-instant");

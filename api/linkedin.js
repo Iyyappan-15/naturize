@@ -70,7 +70,7 @@ OUTPUT FORMAT: Plain text only. No markdown. No bullet points with dashes. Use l
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "llama-4-scout-17b-16e-instruct",
         messages: [
           { role: "system", content: systemMessage },
           { role: "user", content: `Rewrite this LinkedIn post:\n\n${sanitized}` }
