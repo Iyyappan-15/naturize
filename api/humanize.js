@@ -113,11 +113,11 @@ STRICT WRITING RULES:
   });
 
   try {
-    let apiRes = await makeRequest("llama-4-scout-17b-16e-instruct");
+    let apiRes = await makeRequest("openai/gpt-oss-120b");
 
     if (!apiRes.ok) {
       console.error("70b model failed, falling back to 8b...");
-      apiRes = await makeRequest("llama-3.1-8b-instant");
+      apiRes = await makeRequest("openai/gpt-oss-20b");
     }
 
     if (!apiRes.ok) {
@@ -387,3 +387,4 @@ function estimateHumanityScore(text) {
   let score = 75 + Math.min(20, burstiness * 30);
   return Math.min(99, Math.max(50, Math.round(score)));
 }
+

@@ -66,7 +66,7 @@ OUTPUT FORMAT: Plain text only. No markdown formatting. No headers. No bullet po
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-4-scout-17b-16e-instruct",
+        model: "openai/gpt-oss-120b",
         messages: [
           { role: "system", content: systemMessage },
           { role: "user", content: `Rewrite this YouTube script so it sounds natural when spoken:\n\n${sanitized}` }
@@ -96,3 +96,4 @@ OUTPUT FORMAT: Plain text only. No markdown formatting. No headers. No bullet po
     return res.status(500).json({ error: "Internal server error. Please try again." });
   }
 }
+

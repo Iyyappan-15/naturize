@@ -333,10 +333,10 @@ ${numberedSentences}
         })
       });
 
-    let apiRes = await makeRequest("llama-4-scout-17b-16e-instruct");
+    let apiRes = await makeRequest("openai/gpt-oss-120b");
     if (!apiRes.ok) {
       console.log("70b failed, falling back to 8b...");
-      apiRes = await makeRequest("llama-3.1-8b-instant");
+      apiRes = await makeRequest("openai/gpt-oss-20b");
     }
 
     if (!apiRes.ok) {
@@ -484,3 +484,4 @@ function fusedStatOnly(statScore) {
   if (statScore <= 42) return { classification: "Human Written",  confidence: Math.min(98, 55 + (100 - statScore) * 0.4) };
   return { classification: "Uncertain", confidence: 55 };
 }
+

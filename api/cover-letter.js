@@ -72,14 +72,14 @@ FORMATTING (CRITICAL):
   });
 
   try {
-    let apiRes = await makeRequest("llama-4-scout-17b-16e-instruct");
+    let apiRes = await makeRequest("openai/gpt-oss-120b");
 
     if (!apiRes.ok) {
       const errText = await apiRes.clone().text();
       let errJson;
       try { errJson = JSON.parse(errText); } catch { errJson = {}; }
       if (errJson?.error?.code === "model_not_found" || apiRes.status === 404) {
-        apiRes = await makeRequest("llama-3.1-8b-instant");
+        apiRes = await makeRequest("openai/gpt-oss-20b");
       }
       if (!apiRes.ok) throw new Error(errJson?.error?.message || "Groq API error");
     }
@@ -94,3 +94,4 @@ FORMATTING (CRITICAL):
     res.status(500).json({ error: error.message || "Something went wrong" });
   }
 }
+
