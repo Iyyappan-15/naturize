@@ -133,6 +133,20 @@
       line-height: 1.6;
     }
 
+    .quota-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(255, 107, 107, 0.08);
+      border: 1px solid rgba(255, 107, 107, 0.25);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #ff6b6b;
+      margin-top: 14px;
+    }
+
     .tool-wrapper {
       max-width: 880px;
       margin: 0 auto;
@@ -653,6 +667,9 @@
       <span class="beta-badge">BETA TOOL • PHASE 2</span>
       <h1>PowerPoint <span>AI Detector</span></h1>
       <p>Upload any PowerPoint (.pptx) file to inspect slide text, speaker notes, and embedded AI images (Midjourney, DALL-E) with slide-by-slide transparency.</p>
+      <div>
+        <div class="quota-badge" id="quota-badge">⚡ Free Scans: 3/3 remaining today</div>
+      </div>
     </section>
 
     <div class="tool-wrapper">
@@ -821,6 +838,53 @@
     let currentFile = null;
     let extractedDeckText = '';
 
+    const PPT_DAILY_LIMIT = 3;
+
+    function getPptUsage() {
+      const today = new Date().toISOString().slice(0, 10);
+      const raw = localStorage.getItem('nz_ppt_usage');
+      if (!raw) return { date: today, count: 0 };
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.date !== today) return { date: today, count: 0 };
+        return parsed;
+      } catch {
+        return { date: today, count: 0 };
+      }
+    }
+
+    function incrementPptUsage() {
+      const usage = getPptUsage();
+      usage.count += 1;
+      localStorage.setItem('nz_ppt_usage', JSON.stringify(usage));
+      updateQuotaDisplay();
+    }
+
+    function canUsePpt() {
+      return getPptUsage().count < PPT_DAILY_LIMIT;
+    }
+
+    function updateQuotaDisplay() {
+      const usage = getPptUsage();
+      const left = Math.max(0, PPT_DAILY_LIMIT - usage.count);
+      const badge = document.getElementById('quota-badge');
+      if (badge) {
+        badge.textContent = `⚡ Free Scans: ${left}/${PPT_DAILY_LIMIT} remaining today (Resets at midnight)`;
+        if (left === 0) {
+          badge.style.background = 'rgba(255, 69, 58, 0.15)';
+          badge.style.color = '#ff453a';
+          badge.style.borderColor = 'rgba(255, 69, 58, 0.3)';
+        } else {
+          badge.style.background = 'rgba(255, 107, 107, 0.08)';
+          badge.style.color = '#ff6b6b';
+          badge.style.borderColor = 'rgba(255, 107, 107, 0.25)';
+        }
+      }
+    }
+
+    // Initialize quota display
+    updateQuotaDisplay();
+
     function decodeXmlEntities(str) {
       if (!str) return '';
       return str
@@ -925,6 +989,11 @@
 
     btnAnalyze.addEventListener('click', async () => {
       if (!currentFile) return;
+
+      if (!canUsePpt()) {
+        showError("You've reached your free daily limit of 3 PowerPoint scans for today. Quotas reset at midnight locally!");
+        return;
+      }
 
       clearError();
       btnAnalyze.disabled = true;
@@ -1104,6 +1173,9 @@
     });
 
     function renderResults(textData, imgData, extractedImages) {
+      // Record successful usage
+      incrementPptUsage();
+
       const scoreCircle = document.getElementById('score-circle');
       const verdictTitle = document.getElementById('verdict-title');
       const confidenceBadge = document.getElementById('confidence-badge');
