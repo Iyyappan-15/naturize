@@ -1,5 +1,6 @@
 // /api/ppt-detector.js — Naturize PowerPoint (.pptx) AI Detector
-// Extracts text & speaker notes from OOXML slides and evaluates AI vs Human writing
+// Supports both client-side extracted slides payload (bypasses 4.5MB network limits)
+// and server-side JSZip unzipping fallback
 
 import JSZip from 'jszip';
 import checkRateLimit from '../utils/rateLimit.js';
@@ -18,8 +19,6 @@ function decodeXmlEntities(str) {
 
 function extractTextFromXml(xmlString) {
   if (!xmlString) return '';
-  
-  // Extract all text inside <a:t>...</a:t> or <a:t xml:space="...">...</a:t>
   const textMatches = [];
   const regex = /<a:t(?:\s+[^>]*)?>([\s\S]*?)<\/a:t>/gi;
   let match;
@@ -28,7 +27,6 @@ function extractTextFromXml(xmlString) {
       textMatches.push(decodeXmlEntities(match[1]));
     }
   }
-  
   return textMatches.join(' ').replace(/\s+/g, ' ').trim();
 }
 
@@ -46,112 +44,134 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Too many requests. Please try again in a minute.' });
   }
 
-  const { fileBase64, filename = 'presentation.pptx' } = req.body || {};
+  const { slides: incomingSlides, fileBase64, filename = 'presentation.pptx' } = req.body || {};
 
-  if (!fileBase64 || typeof fileBase64 !== 'string') {
-    return res.status(400).json({ error: 'No PowerPoint file provided. Please upload a valid .pptx file.' });
-  }
-
-  // Strip possible data URI header
-  const base64Data = fileBase64.replace(/^data:.*?;base64,/, '');
-
-  let buffer;
-  try {
-    buffer = Buffer.from(base64Data, 'base64');
-  } catch (err) {
-    return res.status(400).json({ error: 'Invalid file encoding. Could not process uploaded file.' });
-  }
-
-  // Size limit check: 4.5MB raw buffer
-  if (buffer.length > 4.5 * 1024 * 1024) {
-    return res.status(400).json({
-      error: 'File size exceeds 4.5MB limit. Please compress images in your PowerPoint and try again.'
-    });
-  }
-
-  let zip;
-  try {
-    zip = await JSZip.loadAsync(buffer);
-  } catch (err) {
-    return res.status(400).json({
-      error: 'Could not read presentation file. Please ensure it is an unencrypted .pptx file (older .ppt formats are not supported).'
-    });
-  }
-
-  // Identify all slide XML files in ppt/slides/
-  const slideEntries = [];
-  zip.forEach((relativePath, file) => {
-    const match = relativePath.match(/^ppt\/slides\/slide(\d+)\.xml$/i);
-    if (match) {
-      slideEntries.push({
-        num: parseInt(match[1], 10),
-        path: relativePath,
-        file
-      });
-    }
-  });
-
-  if (slideEntries.length === 0) {
-    return res.status(400).json({
-      error: 'No slides found in the uploaded file. Please make sure this is a valid PowerPoint (.pptx) deck.'
-    });
-  }
-
-  // Sort slides in numerical order (slide1, slide2, ..., slide10)
-  slideEntries.sort((a, b) => a.num - b.num);
-
-  const slidesData = [];
+  let slidesData = [];
   let totalWords = 0;
 
-  for (const slide of slideEntries) {
-    try {
-      const xmlContent = await slide.file.async('string');
-      const text = extractTextFromXml(xmlContent);
+  // Option 1: Direct client-side extracted slides (Lightning fast, handles 50MB+ decks without 413 error)
+  if (Array.isArray(incomingSlides) && incomingSlides.length > 0) {
+    slidesData = incomingSlides.map((s, idx) => {
+      const text = typeof s.text === 'string' ? s.text.trim() : '';
+      const notes = typeof s.notes === 'string' ? s.notes.trim() : '';
+      const words = (text + ' ' + notes).split(/\s+/).filter(w => w.trim().length > 0);
+      const wordCount = words.length;
+      totalWords += wordCount;
 
-      // Check for associated notes slide
-      // Look for ppt/notesSlides/notesSlide{N}.xml or relationship
-      let notesText = '';
-      const notesFile = zip.file(`ppt/notesSlides/notesSlide${slide.num}.xml`);
-      if (notesFile) {
-        const notesXml = await notesFile.async('string');
-        notesText = extractTextFromXml(notesXml);
-      }
-
-      const words = (text + ' ' + notesText).split(/\s+/).filter(w => w.trim().length > 0);
-      const slideWordCount = words.length;
-      totalWords += slideWordCount;
-
-      // Infer title from the first ~60 characters or first clause of text
-      let title = `Slide ${slide.num}`;
-      if (text.length > 0) {
+      let title = s.title || `Slide ${s.slide_number || idx + 1}`;
+      if (!s.title && text.length > 0) {
         const firstSentence = text.split(/[.\n\r]/)[0].trim();
         if (firstSentence.length > 0 && firstSentence.length < 70) {
           title = firstSentence;
-        } else if (text.length > 0) {
+        } else {
           title = text.slice(0, 50).trim() + (text.length > 50 ? '...' : '');
         }
       }
 
-      slidesData.push({
-        slide_number: slide.num,
+      return {
+        slide_number: s.slide_number || idx + 1,
         title,
         text,
-        notes: notesText,
-        word_count: slideWordCount
-      });
-    } catch (e) {
-      console.error(`Error processing slide ${slide.num}:`, e);
-      slidesData.push({
-        slide_number: slide.num,
-        title: `Slide ${slide.num}`,
-        text: '',
-        notes: '',
-        word_count: 0
+        notes,
+        word_count: wordCount
+      };
+    });
+  } 
+  // Option 2: Fallback server-side unzipping if fileBase64 was provided
+  else if (fileBase64 && typeof fileBase64 === 'string') {
+    const base64Data = fileBase64.replace(/^data:.*?;base64,/, '');
+
+    let buffer;
+    try {
+      buffer = Buffer.from(base64Data, 'base64');
+    } catch (err) {
+      return res.status(400).json({ error: 'Invalid file encoding. Could not process uploaded file.' });
+    }
+
+    if (buffer.length > 4.5 * 1024 * 1024) {
+      return res.status(400).json({
+        error: 'File size exceeds server limits. Please compress images in your PowerPoint and try again.'
       });
     }
+
+    let zip;
+    try {
+      zip = await JSZip.loadAsync(buffer);
+    } catch (err) {
+      return res.status(400).json({
+        error: 'Could not read presentation file. Please ensure it is an unencrypted .pptx file (older .ppt formats are not supported).'
+      });
+    }
+
+    const slideEntries = [];
+    zip.forEach((relativePath, file) => {
+      const match = relativePath.match(/^ppt\/slides\/slide(\d+)\.xml$/i);
+      if (match) {
+        slideEntries.push({
+          num: parseInt(match[1], 10),
+          path: relativePath,
+          file
+        });
+      }
+    });
+
+    if (slideEntries.length === 0) {
+      return res.status(400).json({
+        error: 'No slides found in the uploaded file. Please make sure this is a valid PowerPoint (.pptx) deck.'
+      });
+    }
+
+    slideEntries.sort((a, b) => a.num - b.num);
+
+    for (const slide of slideEntries) {
+      try {
+        const xmlContent = await slide.file.async('string');
+        const text = extractTextFromXml(xmlContent);
+
+        let notesText = '';
+        const notesFile = zip.file(`ppt/notesSlides/notesSlide${slide.num}.xml`);
+        if (notesFile) {
+          const notesXml = await notesFile.async('string');
+          notesText = extractTextFromXml(notesXml);
+        }
+
+        const words = (text + ' ' + notesText).split(/\s+/).filter(w => w.trim().length > 0);
+        const slideWordCount = words.length;
+        totalWords += slideWordCount;
+
+        let title = `Slide ${slide.num}`;
+        if (text.length > 0) {
+          const firstSentence = text.split(/[.\n\r]/)[0].trim();
+          if (firstSentence.length > 0 && firstSentence.length < 70) {
+            title = firstSentence;
+          } else {
+            title = text.slice(0, 50).trim() + (text.length > 50 ? '...' : '');
+          }
+        }
+
+        slidesData.push({
+          slide_number: slide.num,
+          title,
+          text,
+          notes: notesText,
+          word_count: slideWordCount
+        });
+      } catch (e) {
+        console.error(`Error processing slide ${slide.num}:`, e);
+        slidesData.push({
+          slide_number: slide.num,
+          title: `Slide ${slide.num}`,
+          text: '',
+          notes: '',
+          word_count: 0
+        });
+      }
+    }
+  } else {
+    return res.status(400).json({ error: 'No presentation content provided for analysis.' });
   }
 
-  // Edge Case: Entire presentation has 0 or minimal words
+  // Edge Case: Entire presentation has 0 words
   if (totalWords === 0) {
     return res.status(200).json({
       success: true,
@@ -162,7 +182,7 @@ export default async function handler(req, res) {
       overall_score: 0,
       confidence_level: 'Low',
       confidence_reason: 'No readable text was found across all slides. The presentation may contain only screenshots or images.',
-      reasoning: 'The file contains presentation slides, but no extractable text was found in shapes, text boxes, or speaker notes.',
+      reasoning: 'The presentation contains slides, but no extractable text was found in shapes, text boxes, or speaker notes.',
       slides: slidesData.map(s => ({
         ...s,
         ai_score: 0,
@@ -174,6 +194,7 @@ export default async function handler(req, res) {
     });
   }
 
+  // Edge Case: Sparse text (< 30 words)
   if (totalWords < 30) {
     return res.status(200).json({
       success: true,
@@ -196,13 +217,12 @@ export default async function handler(req, res) {
     });
   }
 
-  // Prepare LLM analysis payload
+  // Call Groq API
   const groqKey = process.env.GROQ_API_KEY;
   if (!groqKey || groqKey.trim() === '') {
     return res.status(500).json({ error: 'Server configuration error: Missing AI provider credentials.' });
   }
 
-  // Construct structured text summary for LLM
   let deckTextForPrompt = '';
   slidesData.forEach(s => {
     deckTextForPrompt += `\n--- SLIDE ${s.slide_number}: "${s.title}" (${s.word_count} words) ---\n`;
@@ -210,7 +230,6 @@ export default async function handler(req, res) {
     if (s.notes) deckTextForPrompt += `Speaker Notes: ${s.notes}\n`;
   });
 
-  // Bound prompt size to prevent exceeding token limit
   deckTextForPrompt = deckTextForPrompt.slice(0, 12000);
 
   const systemPrompt = `You are a forensic AI detection engine specialized in PowerPoint presentation decks.
@@ -284,7 +303,6 @@ Return ONLY valid JSON matching this exact schema with zero markdown wrapping:
     try {
       analysis = JSON.parse(rawContent);
     } catch (parseErr) {
-      // Fallback regex extractor if LLM added formatting
       const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         analysis = JSON.parse(jsonMatch[0]);
@@ -293,7 +311,6 @@ Return ONLY valid JSON matching this exact schema with zero markdown wrapping:
       }
     }
 
-    // Merge slide breakdown with extracted slide text & metadata
     const slideBreakdownMap = new Map();
     if (Array.isArray(analysis.slides_breakdown)) {
       analysis.slides_breakdown.forEach(sb => {

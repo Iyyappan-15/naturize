@@ -87,6 +87,9 @@
   }
   </script>
 
+  <!-- Client-side JSZip for instant, zero-network PPTX parsing (handles 50MB+ decks without 4.5MB Vercel upload limit) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -549,7 +552,7 @@
         <div class="dropzone" id="dropzone">
           <div class="dropzone-icon">📊</div>
           <div class="dropzone-title">Click to upload or drag &amp; drop presentation</div>
-          <div class="dropzone-desc">Supports .pptx files up to 4.5MB</div>
+          <div class="dropzone-desc">Supports .pptx files up to 25MB (Instant browser parsing)</div>
           <input type="file" id="file-input" class="file-input" accept=".pptx" />
         </div>
 
@@ -574,8 +577,8 @@
         <!-- Loading State -->
         <div class="loading-container" id="loading-container">
           <div class="spinner"></div>
-          <div class="loading-status" id="loading-status">Unzipping presentation slides...</div>
-          <div class="loading-sub">Extracting slide text, tables, and speaker notes</div>
+          <div class="loading-status" id="loading-status">Parsing presentation slides in browser...</div>
+          <div class="loading-sub" id="loading-sub">Extracting text &amp; speaker notes</div>
         </div>
       </div>
 
@@ -677,10 +680,37 @@
     const btnAnalyze = document.getElementById('btn-analyze');
     const errorBanner = document.getElementById('error-banner');
     const loadingContainer = document.getElementById('loading-container');
+    const loadingStatus = document.getElementById('loading-status');
+    const loadingSub = document.getElementById('loading-sub');
     const outputPanel = document.getElementById('output-panel');
 
     let currentFile = null;
     let extractedDeckText = '';
+
+    function decodeXmlEntities(str) {
+      if (!str) return '';
+      return str
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
+        .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+    }
+
+    function extractTextFromXml(xmlString) {
+      if (!xmlString) return '';
+      const textMatches = [];
+      const regex = /<a:t(?:\s+[^>]*)?>([\s\S]*?)<\/a:t>/gi;
+      let match;
+      while ((match = regex.exec(xmlString)) !== null) {
+        if (match[1]) {
+          textMatches.push(decodeXmlEntities(match[1]));
+        }
+      }
+      return textMatches.join(' ').replace(/\s+/g, ' ').trim();
+    }
 
     function formatFileSize(bytes) {
       if (bytes === 0) return '0 Bytes';
@@ -707,12 +737,12 @@
       if (!file) return;
 
       if (!file.name.toLowerCase().endsWith('.pptx')) {
-        showError('Invalid file format. Please upload a standard PowerPoint (.pptx) file. Legacy .ppt files are not supported.');
+        showError('Invalid file format. Please upload a standard PowerPoint (.pptx) file. Legacy binary .ppt files are not supported.');
         return;
       }
 
-      if (file.size > 4.5 * 1024 * 1024) {
-        showError('File is too large (' + formatFileSize(file.size) + '). The maximum file limit is 4.5MB. Please compress images inside PowerPoint before uploading.');
+      if (file.size > 25 * 1024 * 1024) {
+        showError('File exceeds 25MB limit. Please upload a smaller presentation.');
         return;
       }
 
@@ -767,55 +797,97 @@
       loadingContainer.style.display = 'block';
       outputPanel.style.display = 'none';
 
-      const loadingStatus = document.getElementById('loading-status');
-      loadingStatus.textContent = 'Reading presentation archive...';
+      loadingStatus.textContent = 'Unzipping presentation in browser...';
+      loadingSub.textContent = 'Extracting slide content and speaker notes directly on your device';
 
       try {
-        const reader = new FileReader();
-        reader.readAsDataURL(currentFile);
+        const arrayBuffer = await currentFile.arrayBuffer();
 
-        reader.onload = async () => {
-          const base64Data = reader.result;
+        // Check if JSZip is loaded in window
+        if (typeof JSZip === 'undefined') {
+          throw new Error('Decompression library not ready. Please refresh the page.');
+        }
 
-          loadingStatus.textContent = 'Extracting slide content & speaker notes...';
+        const zip = await JSZip.loadAsync(arrayBuffer);
 
-          try {
-            const response = await fetch('/api/ppt-detector', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                fileBase64: base64Data,
-                filename: currentFile.name
-              })
+        const slideEntries = [];
+        zip.forEach((relativePath, file) => {
+          const match = relativePath.match(/^ppt\/slides\/slide(\d+)\.xml$/i);
+          if (match) {
+            slideEntries.push({
+              num: parseInt(match[1], 10),
+              path: relativePath,
+              file
             });
-
-            const result = await response.json();
-
-            loadingContainer.style.display = 'none';
-            btnAnalyze.disabled = false;
-
-            if (!response.ok || result.error) {
-              showError(result.error || 'Failed to analyze presentation. Please try again.');
-              return;
-            }
-
-            renderResults(result);
-          } catch (netErr) {
-            loadingContainer.style.display = 'none';
-            btnAnalyze.disabled = false;
-            showError('Network error connecting to analysis server. Please check your connection and try again.');
           }
-        };
+        });
 
-        reader.onerror = () => {
-          loadingContainer.style.display = 'none';
-          btnAnalyze.disabled = false;
-          showError('Failed to read file from your device.');
-        };
+        if (slideEntries.length === 0) {
+          throw new Error('No readable slide data found in this PowerPoint file. Please make sure it is a valid .pptx deck.');
+        }
+
+        slideEntries.sort((a, b) => a.num - b.num);
+
+        const extractedSlides = [];
+
+        for (const s of slideEntries) {
+          const xml = await s.file.async('string');
+          const text = extractTextFromXml(xml);
+
+          let notes = '';
+          const notesFile = zip.file(`ppt/notesSlides/notesSlide${s.num}.xml`);
+          if (notesFile) {
+            const notesXml = await notesFile.async('string');
+            notes = extractTextFromXml(notesXml);
+          }
+
+          let title = `Slide ${s.num}`;
+          if (text.length > 0) {
+            const firstSentence = text.split(/[.\n\r]/)[0].trim();
+            if (firstSentence.length > 0 && firstSentence.length < 70) {
+              title = firstSentence;
+            } else {
+              title = text.slice(0, 50).trim() + (text.length > 50 ? '...' : '');
+            }
+          }
+
+          extractedSlides.push({
+            slide_number: s.num,
+            title,
+            text,
+            notes
+          });
+        }
+
+        loadingStatus.textContent = 'Analyzing slide deck with AI...';
+        loadingSub.textContent = 'Evaluating linguistic patterns and synthetic signatures across ' + extractedSlides.length + ' slides';
+
+        // Send extracted lightweight text JSON to backend
+        const response = await fetch('/api/ppt-detector', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slides: extractedSlides,
+            filename: currentFile.name
+          })
+        });
+
+        const result = await response.json();
+
+        loadingContainer.style.display = 'none';
+        btnAnalyze.disabled = false;
+
+        if (!response.ok || result.error) {
+          showError(result.error || 'Failed to analyze presentation. Please try again.');
+          return;
+        }
+
+        renderResults(result);
+
       } catch (err) {
         loadingContainer.style.display = 'none';
         btnAnalyze.disabled = false;
-        showError('An error occurred preparing file upload: ' + err.message);
+        showError(err.message || 'Could not parse presentation file. Please check file integrity.');
       }
     });
 
