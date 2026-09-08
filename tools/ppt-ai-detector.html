@@ -447,7 +447,7 @@
     }
     .signals-list li:last-child { border-bottom: none; }
 
-    /* Visual Media Section */
+    /* Visual Media Section (Phase 2) */
     .media-section {
       margin-bottom: 28px;
       background: var(--surface2);
@@ -470,7 +470,7 @@
     }
     .media-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 16px;
     }
     .media-card {
@@ -483,7 +483,7 @@
     }
     .media-img-wrap {
       width: 100%;
-      height: 120px;
+      height: 130px;
       background: #111;
       display: flex;
       align-items: center;
@@ -493,7 +493,8 @@
     .media-img-wrap img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
+      background: rgba(0,0,0,0.3);
     }
     .media-card-info {
       padding: 10px 12px;
@@ -509,7 +510,7 @@
     }
     .media-verdict-chip {
       display: inline-block;
-      padding: 2px 6px;
+      padding: 3px 6px;
       border-radius: 4px;
       font-size: 0.75rem;
       font-weight: 700;
@@ -517,7 +518,7 @@
     }
     .media-verdict-chip.ai { background: rgba(255, 69, 58, 0.2); color: #ff453a; }
     .media-verdict-chip.human { background: rgba(48, 209, 88, 0.2); color: #30d158; }
-    .media-verdict-chip.neutral { background: var(--surface2); color: var(--muted); }
+    .media-verdict-chip.neutral { background: rgba(255, 255, 255, 0.08); color: var(--text); }
 
     /* Slide Breakdown Table */
     .slides-section h3 {
@@ -962,14 +963,13 @@
         slideEntries.sort((a, b) => a.num - b.num);
 
         const extractedSlides = [];
-        const extractedImages = [];
         const shouldScanImages = toggleImageScan.checked;
 
+        // Extract Text & Notes from slides
         for (const s of slideEntries) {
           const xml = await s.file.async('string');
           const text = extractTextFromXml(xml);
 
-          // Speaker Notes
           let notes = '';
           const notesFile = zip.file(`ppt/notesSlides/notesSlide${s.num}.xml`);
           if (notesFile) {
@@ -987,46 +987,69 @@
             }
           }
 
-          // Extract Slide Images from Relationship Map (ppt/slides/_rels/slide{N}.xml.rels)
-          if (shouldScanImages) {
-            const relsFile = zip.file(`ppt/slides/_rels/slide${s.num}.xml.rels`);
-            if (relsFile) {
-              const relsXml = await relsFile.async('string');
-              const relRegex = /Target="(?:\.\.\/)?(media\/[^"]+)"/gi;
-              let rMatch;
-              while ((rMatch = relRegex.exec(relsXml)) !== null) {
-                const mediaPath = 'ppt/' + rMatch[1];
-                const imgFile = zip.file(mediaPath);
-                if (imgFile) {
-                  const ext = mediaPath.split('.').pop().toLowerCase();
-                  // Skip vector graphics (.emf, .wmf)
-                  if (['png', 'jpg', 'jpeg', 'webp'].includes(ext)) {
-                    const imgBase64 = await imgFile.async('base64');
-                    const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : (ext === 'webp' ? 'image/webp' : 'image/png');
-                    const dataUrl = `data:${mimeType};base64,${imgBase64}`;
-                    
-                    // Filter out tiny icons (< 12KB)
-                    if (imgBase64.length > 16000 && extractedImages.length < 6) {
-                      extractedImages.push({
-                        id: `img_${s.num}_${extractedImages.length + 1}`,
-                        slide_number: s.num,
-                        filename: rMatch[1].split('/').pop(),
-                        base64: dataUrl,
-                        mimeType
-                      });
-                    }
-                  }
-                }
-              }
-            }
-          }
-
           extractedSlides.push({
             slide_number: s.num,
             title,
             text,
             notes
           });
+        }
+
+        // 2. Comprehensive Media Extraction: Scan the entire ppt/media/ folder directly
+        const extractedImages = [];
+        if (shouldScanImages) {
+          loadingStatus.textContent = 'Scanning embedded slide images...';
+          loadingSub.textContent = 'Discovering media assets across all presentation slides';
+
+          // Pre-map relationship files to determine which slide owns which media file
+          const mediaToSlideMap = new Map();
+          for (const s of slideEntries) {
+            const relsFile = zip.file(`ppt/slides/_rels/slide${s.num}.xml.rels`);
+            if (relsFile) {
+              try {
+                const relsXml = await relsFile.async('string');
+                // Match any Target containing a filename (e.g. Target="../media/image1.png" or "image1.png")
+                const targetMatches = relsXml.matchAll(/Target="([^"]+)"/gi);
+                for (const tMatch of targetMatches) {
+                  const targetFilename = tMatch[1].split(/[\\/]/).pop().toLowerCase();
+                  if (!mediaToSlideMap.has(targetFilename)) {
+                    mediaToSlideMap.set(targetFilename, s.num);
+                  }
+                }
+              } catch (e) {}
+            }
+          }
+
+          // Scan all entries in the ZIP starting with ppt/media/
+          const mediaFiles = [];
+          zip.forEach((relPath, f) => {
+            if (/^ppt\/media\/.+\.(png|jpe?g|webp|bmp|gif)$/i.test(relPath) && !f.dir) {
+              mediaFiles.push({ path: relPath, file: f });
+            }
+          });
+
+          // Sort media files so hero illustrations come first
+          for (let i = 0; i < mediaFiles.length && extractedImages.length < 6; i++) {
+            const m = mediaFiles[i];
+            const rawFilename = m.path.split('/').pop();
+            const lowerFilename = rawFilename.toLowerCase();
+            const ext = lowerFilename.split('.').pop();
+            
+            const mimeType = (ext === 'jpg' || ext === 'jpeg') ? 'image/jpeg' : (ext === 'webp' ? 'image/webp' : 'image/png');
+            const imgBase64 = await m.file.async('base64');
+            
+            // Accept any image larger than 2KB (excludes empty pixel spacers)
+            if (imgBase64.length > 2500) {
+              const assignedSlide = mediaToSlideMap.get(lowerFilename) || (i + 1);
+              extractedImages.push({
+                id: `img_${assignedSlide}_${extractedImages.length + 1}`,
+                slide_number: assignedSlide,
+                filename: rawFilename,
+                base64: `data:${mimeType};base64,${imgBase64}`,
+                mimeType
+              });
+            }
+          }
         }
 
         loadingStatus.textContent = 'Analyzing slide deck text with AI...';
@@ -1048,11 +1071,11 @@
           throw new Error(textResult.error || 'Failed to analyze presentation text.');
         }
 
-        // 2. If image scan enabled and images found, send to Image AI detector
+        // 2. Send images to Vision AI detector if available
         let imageResult = null;
         if (shouldScanImages && extractedImages.length > 0) {
           loadingStatus.textContent = 'Scanning embedded images with Vision AI...';
-          loadingSub.textContent = `Checking ${extractedImages.length} illustrations for Midjourney & DALL-E generation`;
+          loadingSub.textContent = `Checking ${extractedImages.length} visual assets for Midjourney & DALL-E signatures`;
 
           try {
             const imgResponse = await fetch('/api/ppt-image-detector', {
@@ -1099,7 +1122,6 @@
       // Overall Score Calculation (combining text + visuals if available)
       let overallScore = textData.overall_score || 0;
       if (imgData && imgData.configured && typeof imgData.overall_visual_ai_score === 'number' && imgData.total_images_analyzed > 0) {
-        // Weighted composite score: 70% Text + 30% Visuals
         overallScore = Math.round((textData.overall_score * 0.70) + (imgData.overall_visual_ai_score * 0.30));
       }
 
@@ -1115,9 +1137,11 @@
       statSlides.textContent = textData.total_slides || 0;
       statWords.textContent = textData.total_words || 0;
 
-      if (imgData && imgData.total_images_analyzed > 0) {
+      // Display image count stat
+      const totalImagesFound = (extractedImages && extractedImages.length) || (imgData && imgData.total_images_analyzed) || 0;
+      if (totalImagesFound > 0) {
         statImagesItem.style.display = 'flex';
-        statImages.textContent = imgData.total_images_analyzed;
+        statImages.textContent = totalImagesFound;
       } else {
         statImagesItem.style.display = 'none';
       }
@@ -1159,29 +1183,52 @@
         humanSignalsList.innerHTML = '<li>No strong natural markers detected</li>';
       }
 
-      // Visual Media Grid Rendering
-      if (imgData && Array.isArray(imgData.images) && imgData.images.length > 0) {
+      // Visual Media Grid Rendering (Shows all discovered images)
+      if (extractedImages && extractedImages.length > 0) {
         mediaGrid.innerHTML = '';
-        visualScoreTag.textContent = `Visual AI Risk: ${imgData.overall_visual_ai_score || 0}%`;
+        
+        if (imgData && imgData.configured) {
+          visualScoreTag.textContent = `Visual AI Risk: ${imgData.overall_visual_ai_score || 0}%`;
+        } else {
+          visualScoreTag.textContent = `${extractedImages.length} Visual Assets Found`;
+        }
 
-        imgData.images.forEach(img => {
-          const original = extractedImages.find(e => e.id === img.id);
-          const imgSrc = original ? original.base64 : '';
+        extractedImages.forEach((img, index) => {
+          // Look up analysis result if available
+          const analyzed = imgData && Array.isArray(imgData.images) ? imgData.images.find(r => r.id === img.id || r.filename === img.filename) : null;
           
           let chipClass = 'neutral';
-          if (img.ai_score >= 60) chipClass = 'ai';
-          else if (img.ai_score <= 35) chipClass = 'human';
+          let verdictText = 'Visual Asset';
+          let generatorText = 'Slide Image';
+
+          if (analyzed && analyzed.verdict !== 'Unchecked (API Key Required)') {
+            if (analyzed.ai_score >= 60) {
+              chipClass = 'ai';
+              verdictText = `${analyzed.ai_score}% AI • ${analyzed.verdict}`;
+              generatorText = analyzed.generator || 'AI Generator';
+            } else if (analyzed.ai_score <= 35) {
+              chipClass = 'human';
+              verdictText = `${analyzed.ai_score}% AI • Real Photo`;
+              generatorText = 'Photograph / Diagram';
+            } else {
+              verdictText = `${analyzed.ai_score}% AI • Mixed`;
+              generatorText = analyzed.generator || 'Visual Graphic';
+            }
+          } else {
+            verdictText = `Extracted Asset (${formatFileSize(Math.round(img.base64.length * 0.75))})`;
+            generatorText = img.filename;
+          }
 
           const card = document.createElement('div');
           card.className = 'media-card';
           card.innerHTML = `
             <div class="media-img-wrap">
-              <img src="${imgSrc}" alt="${escapeHtml(img.filename)}" loading="lazy" />
+              <img src="${img.base64}" alt="${escapeHtml(img.filename)}" loading="lazy" />
             </div>
             <div class="media-card-info">
               <span class="media-slide-badge">Slide ${img.slide_number}</span>
-              <strong>${img.generator || 'Visual Asset'}</strong>
-              <span class="media-verdict-chip ${chipClass}">${img.ai_score}% AI • ${img.verdict}</span>
+              <strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(generatorText)}">${escapeHtml(generatorText)}</strong>
+              <span class="media-verdict-chip ${chipClass}">${verdictText}</span>
             </div>
           `;
           mediaGrid.appendChild(card);
