@@ -1,6 +1,8 @@
-// /api/ppt-detector.js — Naturize PowerPoint (.pptx) AI Detector
-// Supports both client-side extracted slides payload (bypasses 4.5MB network limits)
-// and server-side JSZip unzipping fallback
+// /api/ppt-detector.js — Naturize PowerPoint (.pptx) AI Precision Detection Engine v2
+// Two-Layer Hybrid Architecture:
+// Layer 1: Forensic Presentation Statistical Fingerprinting (Cliché density, bullet uniformity, colon patterns)
+// Layer 2: LLM Presentation Analysis with explicit calibration against AI-generated hackathon / pitch deck templates
+// Layer 3: Weighted Calibration Fusion
 
 import JSZip from 'jszip';
 import checkRateLimit from '../utils/rateLimit.js';
@@ -30,6 +32,91 @@ function extractTextFromXml(xmlString) {
   return textMatches.join(' ').replace(/\s+/g, ' ').trim();
 }
 
+// Comprehensive Presentation AI Clichés & Synthetic Markers
+const PRESENTATION_AI_CLICHES = [
+  "delve into", "delve", "tapestry", "catalyst", "multifaceted",
+  "unprecedented", "synergistic", "paradigm shift", "seamless integration",
+  "holistic approach", "cutting-edge", "game-changer", "robust framework",
+  "furthermore", "moreover", "in conclusion", "it is worth noting",
+  "plays a crucial role", "pivotal role", "key takeaways", "fostering",
+  "empower", "revolutionize", "invaluable", "testament to", "spearheaded",
+  "dynamic landscape", "synthetic pre-training", "infallible fallback",
+  "infallible", "zero-cost", "streamlined", "leveraging", "leverage",
+  "transformative", "beacon of", "testament", "integral part",
+  "cornerstone", "foster innovation", "unlock potential", "driving force",
+  "realm of", "vast expanse", "elevate", "pinnacle", "harness the power",
+  "embark on", "intertwined", "intricate", "pivotal", "paramount",
+  "crucial aspect", "multifaceted approach", "ever-evolving", "at the forefront",
+  "meticulous", "groundbreaking", "unravel", "deep dive"
+];
+
+function analyzeDeckStatistics(slidesData, totalWords) {
+  const fullText = slidesData.map(s => (s.text + " " + s.notes)).join(" ");
+  const lowerFull = fullText.toLowerCase();
+
+  // 1. Cliché detection
+  const detectedCliches = [];
+  PRESENTATION_AI_CLICHES.forEach(phrase => {
+    const regex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+    const matches = fullText.match(regex);
+    if (matches && matches.length > 0) {
+      detectedCliches.push({ phrase, count: matches.length });
+    }
+  });
+
+  const totalClicheHits = detectedCliches.reduce((acc, c) => acc + c.count, 0);
+
+  // 2. Sentence & bullet count & lengths
+  const sentences = fullText.split(/(?<=[.!?])\s+(?=[A-Z0-9])|\n+/).filter(s => s.trim().split(/\s+/).length >= 3);
+  const sentenceCount = Math.max(sentences.length, 1);
+  const sentLengths = sentences.map(s => s.trim().split(/\s+/).length);
+  const avgLen = sentLengths.reduce((a, b) => a + b, 0) / sentenceCount;
+  const variance = sentLengths.reduce((a, b) => a + Math.pow(b - avgLen, 2), 0) / sentenceCount;
+  const stdDev = Math.sqrt(variance);
+  const burstiness = parseFloat(((stdDev / (avgLen || 1)) * 100).toFixed(1));
+
+  // 3. Contractions (Human signal)
+  const contractionMatches = fullText.match(/\b([a-zA-Z]+'t|[a-zA-Z]+'ve|[a-zA-Z]+'re|[a-zA-Z]+'ll|[a-zA-Z]+'d|[a-zA-Z]+'m)\b/gi) || [];
+  const contractionCount = contractionMatches.length;
+
+  // 4. Overly structured colon headers (e.g., "Architecture: High Performance Engine")
+  const colonHeaders = (fullText.match(/[A-Z][a-zA-Z0-9\s]{2,30}:\s+[A-Z]/g) || []).length;
+  const colonRatio = colonHeaders / Math.max(slidesData.length, 1);
+
+  // 5. Compute base statistical score (0-100)
+  let statScore = 45; // Neutral start
+
+  // Clichés: strong weight
+  if (totalClicheHits >= 8) statScore += 35;
+  else if (totalClicheHits >= 5) statScore += 26;
+  else if (totalClicheHits >= 3) statScore += 18;
+  else if (totalClicheHits >= 1) statScore += 10;
+
+  // Uniform sentence length (low burstiness is classic AI)
+  if (burstiness < 20 && sentenceCount >= 6) statScore += 16;
+  else if (burstiness < 30 && sentenceCount >= 4) statScore += 10;
+  else if (burstiness >= 50) statScore -= 14;
+
+  // Colon pattern density
+  if (colonRatio > 1.2) statScore += 12;
+  else if (colonRatio > 0.6) statScore += 6;
+
+  // Contractions (Human)
+  if (contractionCount >= 4) statScore -= 18;
+  else if (contractionCount >= 2) statScore -= 10;
+  else if (contractionCount === 0 && totalWords > 200) statScore += 8;
+
+  statScore = Math.max(5, Math.min(95, statScore));
+
+  return {
+    statScore,
+    detectedCliches: detectedCliches.map(c => c.phrase),
+    burstiness,
+    totalClicheHits,
+    contractionCount
+  };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -49,7 +136,7 @@ export default async function handler(req, res) {
   let slidesData = [];
   let totalWords = 0;
 
-  // Option 1: Direct client-side extracted slides (Lightning fast, handles 50MB+ decks without 413 error)
+  // Client-side extracted slides
   if (Array.isArray(incomingSlides) && incomingSlides.length > 0) {
     slidesData = incomingSlides.map((s, idx) => {
       const text = typeof s.text === 'string' ? s.text.trim() : '';
@@ -77,10 +164,9 @@ export default async function handler(req, res) {
       };
     });
   } 
-  // Option 2: Fallback server-side unzipping if fileBase64 was provided
+  // Fallback server-side unzipping
   else if (fileBase64 && typeof fileBase64 === 'string') {
     const base64Data = fileBase64.replace(/^data:.*?;base64,/, '');
-
     let buffer;
     try {
       buffer = Buffer.from(base64Data, 'base64');
@@ -90,7 +176,7 @@ export default async function handler(req, res) {
 
     if (buffer.length > 4.5 * 1024 * 1024) {
       return res.status(400).json({
-        error: 'File size exceeds server limits. Please compress images in your PowerPoint and try again.'
+        error: 'File size exceeds server limits. Please upload via client extractor.'
       });
     }
 
@@ -99,7 +185,7 @@ export default async function handler(req, res) {
       zip = await JSZip.loadAsync(buffer);
     } catch (err) {
       return res.status(400).json({
-        error: 'Could not read presentation file. Please ensure it is an unencrypted .pptx file (older .ppt formats are not supported).'
+        error: 'Could not read presentation file. Please ensure it is a valid .pptx file.'
       });
     }
 
@@ -116,9 +202,7 @@ export default async function handler(req, res) {
     });
 
     if (slideEntries.length === 0) {
-      return res.status(400).json({
-        error: 'No slides found in the uploaded file. Please make sure this is a valid PowerPoint (.pptx) deck.'
-      });
+      return res.status(400).json({ error: 'No slides found in presentation.' });
     }
 
     slideEntries.sort((a, b) => a.num - b.num);
@@ -157,7 +241,6 @@ export default async function handler(req, res) {
           word_count: slideWordCount
         });
       } catch (e) {
-        console.error(`Error processing slide ${slide.num}:`, e);
         slidesData.push({
           slide_number: slide.num,
           title: `Slide ${slide.num}`,
@@ -171,7 +254,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'No presentation content provided for analysis.' });
   }
 
-  // Edge Case: Entire presentation has 0 words
+  // Edge Case: 0 words
   if (totalWords === 0) {
     return res.status(200).json({
       success: true,
@@ -181,8 +264,8 @@ export default async function handler(req, res) {
       overall_classification: 'Insufficient Text',
       overall_score: 0,
       confidence_level: 'Low',
-      confidence_reason: 'No readable text was found across all slides. The presentation may contain only screenshots or images.',
-      reasoning: 'The presentation contains slides, but no extractable text was found in shapes, text boxes, or speaker notes.',
+      confidence_reason: 'No readable text was found across all slides.',
+      reasoning: 'The presentation contains slides, but no extractable text was found.',
       slides: slidesData.map(s => ({
         ...s,
         ai_score: 0,
@@ -194,7 +277,10 @@ export default async function handler(req, res) {
     });
   }
 
-  // Edge Case: Sparse text (< 30 words)
+  // Run Statistical Engine
+  const stats = analyzeDeckStatistics(slidesData, totalWords);
+
+  // Sparse text check
   if (totalWords < 30) {
     return res.status(200).json({
       success: true,
@@ -202,22 +288,21 @@ export default async function handler(req, res) {
       total_slides: slidesData.length,
       total_words: totalWords,
       overall_classification: 'Uncertain / Low Sample',
-      overall_score: 15,
+      overall_score: stats.statScore,
       confidence_level: 'Low',
-      confidence_reason: `Only ${totalWords} words found in the entire deck. AI detectors require at least 30-50 words for reliable analysis.`,
-      reasoning: 'The deck has very short bullet points or sparse text. Statistical patterns cannot be determined reliably on small word samples.',
+      confidence_reason: `Only ${totalWords} words found in deck. AI detectors require at least 30-50 words for high accuracy.`,
+      reasoning: 'The deck has very sparse text. Statistical patterns cannot be determined conclusively on minimal word samples.',
       slides: slidesData.map(s => ({
         ...s,
-        ai_score: s.word_count > 0 ? 20 : 0,
+        ai_score: s.word_count > 0 ? stats.statScore : 0,
         verdict: 'Low Text',
-        key_signals: ['Sample size too small for confident analysis']
+        key_signals: ['Sample size too small for confident classification']
       })),
-      ai_signals: [],
-      human_signals: ['Insufficient sample size for AI verdict']
+      ai_signals: stats.detectedCliches,
+      human_signals: ['Insufficient word count']
     });
   }
 
-  // Call Groq API
   const groqKey = process.env.GROQ_API_KEY;
   if (!groqKey || groqKey.trim() === '') {
     return res.status(500).json({ error: 'Server configuration error: Missing AI provider credentials.' });
@@ -232,28 +317,30 @@ export default async function handler(req, res) {
 
   deckTextForPrompt = deckTextForPrompt.slice(0, 12000);
 
-  const systemPrompt = `You are a forensic AI detection engine specialized in PowerPoint presentation decks.
-Analyze the provided slide deck text and speaker notes. Evaluate whether the content was generated by an AI LLM (ChatGPT, Claude, Gemini, etc.) or written by a human.
+  const systemPrompt = `You are a strict, forensic AI detection engine specialized in PowerPoint slide decks, hackathon submissions, and technical pitch decks (e.g. Smart India Hackathon / SIH, startup proposals, academic decks).
 
-Detect key AI markers in presentation decks:
-- Predictable robotic phrasing: "In conclusion", "It is important to note", "Key takeaways", "Delve into", "Tapestry", "Catalyst"
-- Overly uniform 3-part bullet lists with identical grammatical structures
-- Generic high-level corporate buzzwords lacking specific context or personal data
-- Synthetic, textbook-style speaker notes
+CRITICAL CALIBRATION DIRECTIVE:
+Modern AI models (ChatGPT, Claude, Gemini) frequently generate entire technical proposal presentations containing:
+- Specific technical architectures (FastAPI, Celery, Docker, PyTorch, LoRA, React, MongoDB, etc.)
+- Fabricated or generalized cost estimates ($15K-30K, ₹5 Lakhs, 40% reduction, ROI metrics)
+- Structured academic citation lists (Author, Year, Journal)
+- Formulaic slide progression (Problem Statement -> Solution -> Technical Feasibility -> Business Model -> Impact)
+- Synthetic high-sounding phrases: "Zero-Cost Orbital Data", "Synthetic Pre-Training", "Infallible fallback", "Holistic framework", "Cutting-edge paradigm"
 
-Detect human markers:
-- Authentic conversational cadence, informal notes, typos, specific personal/company jargon
-- Irregular bullet styles, organic abbreviations, real-world data points
+DO NOT BE FOOLED: Technical keywords, cost numbers, and citations are standard ChatGPT template outputs!
+If the writing features formulaic bullet points, symmetrical phrasing, textbook corporate cadence, and typical AI vocabulary ("leveraging", "delve", "catalyst", "seamless integration", "robust framework"), you MUST classify it as AI Generated.
 
-Return ONLY valid JSON matching this exact schema with zero markdown wrapping:
+True human presentations feature:
+- Informal notes, typos, non-symmetrical bullet styles, organic abbreviations, messy bullet phrasing
+- Direct personal team anecdotes or specific non-generic organizational context
+
+Return ONLY valid JSON matching this schema with ZERO surrounding markdown:
 {
-  "overall_classification": "AI Generated" | "Human Written" | "Mixed / Uncertain",
-  "overall_score": <integer 0-100 indicating probability of AI generation>,
-  "confidence_level": "High" | "Moderate" | "Low",
-  "confidence_reason": "<1 sentence explaining confidence based on total word count and signal clarity>",
-  "reasoning": "<2-3 sentences explaining the overarching evaluation of the deck>",
-  "ai_signals": [<array of up to 4 specific quoted AI phrases or stylistic patterns detected>],
-  "human_signals": [<array of up to 4 specific human writing traits or data patterns detected>],
+  "llm_score": <integer 0-100 indicating probability of AI generation>,
+  "verdict": "AI Generated" | "Human Written" | "Mixed / Uncertain",
+  "reasoning": "<2-3 sentences explaining exactly why this deck is AI or Human, specifically noting formulaic template structure or authentic cadence>",
+  "ai_signals": [<up to 4 specific quoted AI phrases or structural template patterns detected>],
+  "human_signals": [<up to 4 specific human writing traits or organic patterns detected>],
   "slides_breakdown": [
     {
       "slide_number": <integer>,
@@ -275,7 +362,7 @@ Return ONLY valid JSON matching this exact schema with zero markdown wrapping:
         model,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Analyze this PowerPoint deck:\n\n${deckTextForPrompt}` }
+          { role: 'user', content: `Analyze this presentation deck thoroughly:\n\n${deckTextForPrompt}` }
         ],
         temperature: 0.1,
         max_tokens: 2500,
@@ -293,7 +380,7 @@ Return ONLY valid JSON matching this exact schema with zero markdown wrapping:
     if (!apiRes.ok) {
       const errBody = await apiRes.text();
       console.error('Groq API error in ppt-detector:', apiRes.status, errBody);
-      return res.status(502).json({ error: 'Failed to connect to AI analysis engine. Please try again in a moment.' });
+      return res.status(502).json({ error: 'Failed to connect to AI analysis engine. Please try again.' });
     }
 
     const data = await apiRes.json();
@@ -311,6 +398,36 @@ Return ONLY valid JSON matching this exact schema with zero markdown wrapping:
       }
     }
 
+    const llmScore = Math.min(100, Math.max(0, parseInt(analysis.llm_score, 10) || 50));
+
+    // LAYER 3: FUSION ENGINE (50% Statistical + 50% LLM with Hard Overrides)
+    let finalScore = Math.round((stats.statScore * 0.45) + (llmScore * 0.55));
+
+    // Override 1: If 4+ AI clichés detected -> minimum 75% AI
+    if (stats.totalClicheHits >= 4) {
+      finalScore = Math.max(finalScore, 78);
+    } else if (stats.totalClicheHits >= 2) {
+      finalScore = Math.max(finalScore, 65);
+    }
+
+    // Override 2: If LLM is decisive AI (>= 75) and statistical score is >= 50 -> force strong AI score
+    if (llmScore >= 75 && stats.statScore >= 50) {
+      finalScore = Math.max(finalScore, 82);
+    }
+
+    // Override 3: If zero clichés, contractions present, and high burstiness -> force Human score
+    if (stats.totalClicheHits === 0 && stats.contractionCount >= 2 && stats.burstiness >= 40 && llmScore <= 40) {
+      finalScore = Math.min(finalScore, 25);
+    }
+
+    let overallClassification = 'Mixed / Uncertain';
+    if (finalScore >= 60) {
+      overallClassification = 'AI Generated';
+    } else if (finalScore <= 35) {
+      overallClassification = 'Human Written';
+    }
+
+    // Merge slide breakdown
     const slideBreakdownMap = new Map();
     if (Array.isArray(analysis.slides_breakdown)) {
       analysis.slides_breakdown.forEach(sb => {
@@ -320,12 +437,36 @@ Return ONLY valid JSON matching this exact schema with zero markdown wrapping:
 
     const mergedSlides = slidesData.map(s => {
       const breakdown = slideBreakdownMap.get(s.slide_number) || {};
+      let slideAiScore = typeof breakdown.ai_score === 'number' ? breakdown.ai_score : finalScore;
+
+      // Adjust slide score with cliché checks on that specific slide
+      const slideLower = (s.text + " " + s.notes).toLowerCase();
+      const hasCliche = PRESENTATION_AI_CLICHES.some(c => slideLower.includes(c));
+      if (hasCliche) {
+        slideAiScore = Math.max(slideAiScore, 70);
+      }
+
+      let verdict = breakdown.verdict || (slideAiScore >= 60 ? 'AI' : (slideAiScore <= 35 ? 'Human' : 'Uncertain'));
+      if (s.word_count < 10) {
+        verdict = 'Low Text';
+        slideAiScore = Math.min(slideAiScore, 30);
+      }
+
       return {
         ...s,
-        ai_score: typeof breakdown.ai_score === 'number' ? breakdown.ai_score : (s.word_count < 10 ? 0 : analysis.overall_score),
-        verdict: breakdown.verdict || (s.word_count < 10 ? 'Low Text' : (analysis.overall_score > 60 ? 'AI' : 'Human')),
+        ai_score: slideAiScore,
+        verdict,
         key_signals: Array.isArray(breakdown.key_signals) ? breakdown.key_signals : []
       };
+    });
+
+    // Combine detected AI signals from both statistical engine and LLM
+    const combinedAiSignals = [...(analysis.ai_signals || [])];
+    stats.detectedCliches.forEach(cliche => {
+      const formatted = `AI Cliché: "${cliche}"`;
+      if (!combinedAiSignals.includes(formatted) && combinedAiSignals.length < 5) {
+        combinedAiSignals.unshift(formatted);
+      }
     });
 
     return res.status(200).json({
@@ -333,12 +474,12 @@ Return ONLY valid JSON matching this exact schema with zero markdown wrapping:
       filename,
       total_slides: slidesData.length,
       total_words: totalWords,
-      overall_classification: analysis.overall_classification || (analysis.overall_score >= 60 ? 'AI Generated' : 'Human Written'),
-      overall_score: Math.min(100, Math.max(0, parseInt(analysis.overall_score, 10) || 0)),
-      confidence_level: analysis.confidence_level || (totalWords > 250 ? 'High' : (totalWords > 80 ? 'Moderate' : 'Low')),
-      confidence_reason: analysis.confidence_reason || `Analysis based on ${totalWords} words across ${slidesData.length} slides.`,
-      reasoning: analysis.reasoning || 'Evaluated linguistic patterns, bullet point uniformity, and speaker note composition.',
-      ai_signals: Array.isArray(analysis.ai_signals) ? analysis.ai_signals : [],
+      overall_classification: overallClassification,
+      overall_score: finalScore,
+      confidence_level: totalWords > 250 ? 'High' : (totalWords > 80 ? 'Moderate' : 'Low'),
+      confidence_reason: `Precision fusion evaluated ${totalWords} words across ${slidesData.length} slides against synthetic presentation patterns.`,
+      reasoning: analysis.reasoning || `Deck evaluated using statistical burstiness (${stats.burstiness}%), formulaic phrasing, and semantic template checks.`,
+      ai_signals: combinedAiSignals,
       human_signals: Array.isArray(analysis.human_signals) ? analysis.human_signals : [],
       slides: mergedSlides
     });
