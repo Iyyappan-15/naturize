@@ -1123,4 +1123,18 @@ document.addEventListener('DOMContentLoaded', () => {
   updateCounters();
   updateUsageBar();
   switchTab('humanize');
+
+  // Check for pre-filled text from other tools (e.g. PPT Detector)
+  try {
+    const prefill = sessionStorage.getItem('naturize_prefill_text');
+    if (prefill && hInput) {
+      hInput.value = prefill;
+      hInput.dispatchEvent(new Event('input'));
+      sessionStorage.removeItem('naturize_prefill_text');
+      const toolEl = document.getElementById('tool') || document.querySelector('.tool-section');
+      if (toolEl) {
+        setTimeout(() => toolEl.scrollIntoView({ behavior: 'smooth' }), 300);
+      }
+    }
+  } catch (e) {}
 });
