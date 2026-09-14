@@ -1013,13 +1013,137 @@ callDetect = async function() {
 }
 
 // Clear handlers to hide feedback
-const hClear = () => { if (hFeedbackRow) hFeedbackRow.style.display = 'none'; };
-const dClear = () => { if (dFeedbackRow) dFeedbackRow.style.display = 'none'; };
+const hClear = () => { 
+  if (hFeedbackRow) hFeedbackRow.style.display = 'none'; 
+  if (hFileName) hFileName.textContent = '';
+};
+const dClear = () => { 
+  if (dFeedbackRow) dFeedbackRow.style.display = 'none'; 
+  if (dFileName) dFileName.textContent = '';
+};
 $('#h-input')?.addEventListener('input', (e) => { if (e.target.value === '') hClear(); });
 $('#d-input')?.addEventListener('input', (e) => {
   const val = e.target.value;
   $('#d-char-count').textContent = val.length;
   if (val === '') dClear();
+});
+
+/* ══════════════════════════════════════════════
+   FILE UPLOAD HANDLERS (.txt & .docx)
+══════════════════════════════════════════════ */
+async function extractTextFromDocx(arrayBuffer) {
+  // Strategy 1: Use Mammoth.js for rich OOXML extraction
+  if (typeof mammoth !== 'undefined' && mammoth.extractRawText) {
+    try {
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      if (result && result.value && result.value.trim().length > 0) {
+        return result.value.trim();
+      }
+    } catch (e) {
+      console.warn('Mammoth extraction failed, trying JSZip fallback...', e);
+    }
+  }
+
+  // Strategy 2: Fallback to JSZip XML extraction
+  if (typeof JSZip !== 'undefined') {
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    const docXmlFile = zip.file('word/document.xml');
+    if (!docXmlFile) throw new Error('Invalid Word document structure.');
+    const xmlContent = await docXmlFile.async('string');
+    
+    // Extract paragraphs and text nodes
+    const paragraphs = [];
+    const pRegex = /<w:p(?:\s+[^>]*)?>([\s\S]*?)<\/w:p>/gi;
+    let pMatch;
+    while ((pMatch = pRegex.exec(xmlContent)) !== null) {
+      const tRegex = /<w:t(?:\s+[^>]*)?>([\s\S]*?)<\/w:t>/gi;
+      const pText = [];
+      let tMatch;
+      while ((tMatch = tRegex.exec(pMatch[1])) !== null) {
+        if (tMatch[1]) pText.push(tMatch[1]);
+      }
+      if (pText.length > 0) {
+        paragraphs.push(pText.join(''));
+      }
+    }
+    return paragraphs.join('\n\n');
+  }
+
+  throw new Error('Document parsing library not loaded. Please refresh the page.');
+}
+
+async function handleFileUpload(file, targetInput, fileNameLabel) {
+  if (!file || !targetInput) return;
+  const name = file.name;
+  const lowerName = name.toLowerCase();
+
+  if (lowerName.endsWith('.doc') && !lowerName.endsWith('.docx')) {
+    showToast('Legacy .doc format is not supported. Please save your file as .docx in Word.', 'error');
+    return;
+  }
+
+  if (!lowerName.endsWith('.txt') && !lowerName.endsWith('.docx')) {
+    showToast('Unsupported file type. Please upload a .txt or .docx file.', 'error');
+    return;
+  }
+
+  try {
+    let extractedText = '';
+
+    if (lowerName.endsWith('.txt')) {
+      extractedText = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Failed to read text file.'));
+        reader.readAsText(file);
+      });
+    } else if (lowerName.endsWith('.docx')) {
+      const arrayBuffer = await file.arrayBuffer();
+      extractedText = await extractTextFromDocx(arrayBuffer);
+    }
+
+    if (!extractedText || extractedText.trim().length === 0) {
+      showToast('No readable text found in the uploaded file.', 'error');
+      return;
+    }
+
+    // Truncate gracefully if exceeds 10,000 characters
+    let isTruncated = false;
+    if (extractedText.length > 10000) {
+      extractedText = extractedText.slice(0, 10000);
+      isTruncated = true;
+    }
+
+    targetInput.value = extractedText;
+    targetInput.dispatchEvent(new Event('input'));
+
+    if (fileNameLabel) {
+      fileNameLabel.textContent = name;
+      fileNameLabel.title = name;
+    }
+
+    if (isTruncated) {
+      showToast(`Loaded first 10,000 characters from ${name}.`, 'info');
+    } else {
+      showToast(`Loaded ${name} successfully!`, 'success');
+    }
+  } catch (err) {
+    console.error('File extraction error:', err);
+    showToast(err.message || 'Failed to extract text from document.', 'error');
+  }
+}
+
+// Wire up file inputs
+hFileInput?.addEventListener('change', (e) => {
+  if (e.target.files && e.target.files[0]) {
+    handleFileUpload(e.target.files[0], hInput, hFileName);
+  }
+});
+
+dFileInput?.addEventListener('change', (e) => {
+  if (e.target.files && e.target.files[0]) {
+    handleFileUpload(e.target.files[0], dInput, dFileName);
+  }
 });
 
 /* ══════════════════════════════════════════════

@@ -528,11 +528,11 @@
 
                 <!-- File Upload -->
                 <div class="file-upload-wrap">
-                  <label class="file-upload-btn" for="h-file-input" aria-label="Upload a .txt file">
+                  <label class="file-upload-btn" for="h-file-input" aria-label="Upload a .txt or .docx file">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    Upload .txt file
+                    Upload .txt / .docx
                   </label>
-                  <input type="file" id="h-file-input" accept=".txt" style="display:none" aria-label="Upload text file for humanizer" />
+                  <input type="file" id="h-file-input" accept=".txt,.docx,.doc" style="display:none" aria-label="Upload text or word file for humanizer" />
                   <span class="file-name-label" id="h-file-name"></span>
                 </div>
 
@@ -598,11 +598,11 @@
 
                 <!-- File Upload -->
                 <div class="file-upload-wrap">
-                  <label class="file-upload-btn" for="d-file-input" aria-label="Upload a .txt file">
+                  <label class="file-upload-btn" for="d-file-input" aria-label="Upload a .txt or .docx file">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    Upload .txt file
+                    Upload .txt / .docx
                   </label>
-                  <input type="file" id="d-file-input" accept=".txt" style="display:none" aria-label="Upload text file for detector" />
+                  <input type="file" id="d-file-input" accept=".txt,.docx,.doc" style="display:none" aria-label="Upload text or word file for detector" />
                   <span class="file-name-label" id="d-file-name"></span>
                 </div>
 
@@ -908,6 +908,8 @@
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   
   <script src="script.js"></script>
 </body>
